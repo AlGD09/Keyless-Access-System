@@ -4,6 +4,7 @@
 import asyncio
 from dbus_fast.aio import MessageBus
 from dbus_fast.service import ServiceInterface, method, dbus_property, PropertyAccess
+from dbus_fast import BusType
 from dbus_fast import Variant
 
 ADAPTER_IFACE = 'org.bluez.Adapter1'
@@ -35,7 +36,7 @@ class Advertisement(ServiceInterface):
 
 
 async def main():
-    bus = await MessageBus().connect()
+    bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
 
     obj = await bus.introspect(BLUEZ_SERVICE_NAME, "/org/bluez/hci0")
     adapter = bus.get_proxy_object(BLUEZ_SERVICE_NAME, "/org/bluez/hci0", obj)
