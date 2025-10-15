@@ -19,7 +19,7 @@ class Advertisement(ServiceInterface):
         super().__init__("org.bluez.LEAdvertisement1")
         self.ad_type = "peripheral"
         self.local_name = "RCU_Test"
-        self.manufacturer_data = {0xFFFF: [72, 97, 108, 108, 111]}  # "Hallo" in ASCII
+        self.manufacturer_data = {0xFFFF: Variant('ay', b'Hallo')}  # "Hallo" in ASCII
         self.service_uuids = []
 
     @dbus_property(access=PropertyAccess.READ)
