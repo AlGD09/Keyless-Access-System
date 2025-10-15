@@ -12,7 +12,7 @@ async def main():
     bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
 
     ad_manager, ad_path = await start_advertising(bus)
-    # await start_gatt_service(bus)
+    await start_gatt_service(bus)
 
     try:
         while True:
