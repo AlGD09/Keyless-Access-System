@@ -2,8 +2,12 @@
 # main.py – BLE Advertising Test mit Name und Nachricht
 
 import asyncio
+import os
+from dbus_fast import BusType, Variant
 from dbus_fast.aio import MessageBus
 from dbus_fast.service import ServiceInterface, method, dbus_property, PropertyAccess
+
+
 
 BLUEZ_SERVICE_NAME = "org.bluez"
 ADAPTER_OBJECT_PATH = "/org/bluez/hci0"
@@ -39,7 +43,7 @@ class Advertisement(ServiceInterface):
         print("Advertisement released")
 
 async def main():
-    bus = await MessageBus(bus_type=1).connect()
+    bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
     adv = Advertisement()
     bus.export(ADVERTISING_OBJECT_PATH, adv)
 
