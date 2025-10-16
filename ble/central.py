@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-ble/central.py – BLE Central-Logik der RCU (nur Funktionen, kein direkter Start)
+ble/central.py – BLE Central-Logik der RCU (Modul)
+Erkennt Geräte anhand ihrer Manufacturer Data (Company Identifier + Payload)
+und verbindet sich automatisch mit ihnen.
 """
 
 from bleak import BleakScanner, BleakClient
 import asyncio
 
+# Gesuchter Manufacturer Identifier (16-bit Company ID)
 TARGET_MANUFACTURER_ID = 0xFFFF
+# Optional: erwarteter Payload (leer = egal)
 EXPECTED_PAYLOAD = b""
 
 
 async def scan_for_devices(timeout: int = 10):
-    """Scannt nach Geräten mit der passenden Manufacturer Data."""
+    """Scannt BLE-Geräte und gibt passende Geräte inkl. Manufacturer Data zurück."""
     print(f"🔍 Scanning for BLE devices for {timeout} s ...")
     devices = await BleakScanner.discover(timeout=timeout)
     found = []
@@ -25,24 +29,36 @@ async def scan_for_devices(timeout: int = 10):
             continue
 
         for comp_id, payload in mdata.items():
+            # Alle Manufacturer-Daten anzeigen
+            print(f"📡 {name} ({d.address}) → CompanyID: 0x{comp_id:04X}, Data: {payload.hex()}")
+
             if comp_id == TARGET_MANUFACTURER_ID:
                 if not EXPECTED_PAYLOAD or payload.startswith(EXPECTED_PAYLOAD):
-                    print(f"✅ Matching device: {name} ({d.address})")
-                    found.append(d)
+                    print(f"✅ Matching device gefunden: {name} ({d.address})")
+                    found.append({
+                        "device": d,
+                        "company_id": comp_id,
+                        "payload": payload
+                    })
     return found
 
 
 async def connect_to_device(device):
-    """Verbindet zur angegebenen Adresse und zeigt GATT-Services."""
-    print(f"🔗 Connecting to {device.name or 'N/A'} ({device.address}) ...")
+    """Verbindet zu einem Gerät und zeigt dessen GATT-Services an."""
+    d = device["device"]
+    print(f"🔗 Connecting to {d.name or 'N/A'} ({d.address}) ...")
+
     try:
-        async with BleakClient(device.address) as client:
+        async with BleakClient(d.address) as client:
             if client.is_connected:
-                print(f"✅ Connected to {device.name or 'N/A'}")
+                print(f"✅ Connected to {d.name or 'N/A'} ({d.address})")
+                print("🔎 Discovering services ...")
+
                 for service in client.services:
                     print(f"[Service] {service.uuid}")
                     for char in service.characteristics:
                         print(f"  [Characteristic] {char.uuid} (props: {char.properties})")
+
                 print("🔌 Disconnecting ...")
             else:
                 print("❌ Connection failed.")
