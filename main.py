@@ -11,16 +11,16 @@ from ble.gatt_client import perform_challenge_response
 
 
 async def main():
-    print("🚗 Starte Keyless-Access-System (BLE Central)...")
+    print("Starte Keyless-Access-System (BLE Central)...")
 
-    # 1️⃣ Scanne nach Geräten mit passender Manufacturer Data
+    # Scanne nach Geräten mit passender Manufacturer Data
     found_devices = await scan_for_devices(timeout=10)
 
     if not found_devices:
-        print("❌ Kein passendes Gerät gefunden.")
+        print("Kein passendes Gerät gefunden.")
         return
 
-    print("\n📋 Gefundene Geräte mit passender Manufacturer Data:")
+    print("\nGefundene Geräte mit passender Manufacturer Data:")
     for idx, info in enumerate(found_devices, start=1):
         d = info["device"]
         cid = info["company_id"]
@@ -30,20 +30,20 @@ async def main():
         print(f"    → Payload   : {payload.hex()}")
     print("")
 
-    # 2️⃣ Wähle erstes gefundenes Gerät aus (du kannst später Auswahl erweitern)
+    # Wähle erstes gefundenes Gerät aus (du kannst später Auswahl erweitern)
     selected_device = found_devices[0]["device"]
-    print(f"📲 Verwende Gerät: {selected_device.name or 'N/A'} ({selected_device.address})")
+    print(f"Verwende Gerät: {selected_device.name or 'N/A'} ({selected_device.address})")
 
-    # 3️⃣ Führe Challenge-Response-Prozess aus
+    # Führe Challenge-Response-Prozess aus
     success = await perform_challenge_response(selected_device)
 
-    # 4️⃣ Reaktion je nach Ergebnis
+    # Reaktion je nach Ergebnis
     if success:
-        print("🔓 Authentifizierung erfolgreich – Zugang freigegeben.")
+        print("Authentifizierung erfolgreich – Zugang freigegeben.")
     else:
-        print("🔒 Authentifizierung fehlgeschlagen – Zugang verweigert.")
+        print("Authentifizierung fehlgeschlagen – Zugang verweigert.")
 
-    print("\n✅ Prozess abgeschlossen.")
+    print("\nProzess abgeschlossen.")
 
 
 if __name__ == "__main__":
