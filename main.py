@@ -4,7 +4,7 @@
 import asyncio
 from ble.central import scan_for_devices
 from ble.gatt_client import perform_challenge_response
-from io.output_control import dio6_set
+from rcu_io.DIO6 import dio6_set
 from bleak import BleakClient
 
 # RSSI-Schwelle für Freigabe (z. B. Gerät in Reichweite)
