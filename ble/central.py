@@ -2,21 +2,24 @@
 # -*- coding: utf-8 -*-
 """
 ble/central.py – BLE Central-Logik der RCU
-Erkennt Geräte anhand beworbener Service-UUIDs (statt MAC oder Name)
+Erkennt Geräte anhand ihrer Manufacturer Data (Company Identifier + Payload)
 und verbindet sich automatisch mit ihnen.
 """
 
 import asyncio
 from bleak import BleakScanner, BleakClient
 
-# Gesuchte Service-UUID (aus nRF Connect: 0x12345678)
-TARGET_SERVICE_UUID = "0000180a-0000-1000-8000-00805f9b34fb"
+# Gesuchter Manufacturer Identifier (16-bit Company ID)
+# z. B. 0xFFFF = Testwert aus nRF Connect Advertising "Manufacturer Data"
+TARGET_MANUFACTURER_ID = 0xFFFF
+
+# Optional: erwarteter Inhalt im Payload (als Bytefolge)
+EXPECTED_PAYLOAD = b""  # Beispielinhalt
 
 
 async def scan_for_devices(timeout: int = 10):
     """
-    Scannt die Umgebung nach BLE-Geräten, prüft deren Advertised Service UUIDs
-    und gibt passende Geräte zurück.
+    Scannt BLE-Geräte und prüft, ob Manufacturer Data den gewünschten Identifier enthält.
     """
     print(f"🔍 Scanning for BLE devices for {timeout} s ...")
     devices = await BleakScanner.discover(timeout=timeout)
@@ -24,21 +27,29 @@ async def scan_for_devices(timeout: int = 10):
 
     for d in devices:
         name = d.name or "N/A"
-        uuids = [u.lower() for u in d.metadata.get("uuids", [])]
+        mdata = d.metadata.get("manufacturer_data", {})
 
-        if TARGET_SERVICE_UUID.lower() in uuids:
-            print(f"✅ Found target UUID on device: {name} ({d.address})")
-            print(f"   → Advertised UUIDs: {uuids}")
-            found.append(d)
-        else:
-            print(f"• Skipped: {name} ({d.address}) – UUIDs: {uuids or 'none'}")
+        if not mdata:
+            print(f"• Skipped: {name} ({d.address}) – keine Manufacturer Data")
+            continue
+
+        for comp_id, payload in mdata.items():
+            print(f"📡 {name} ({d.address}) → CompanyID: 0x{comp_id:04X}, Data: {payload.hex()}")
+
+            if comp_id == TARGET_MANUFACTURER_ID:
+                # Optional: prüfe zusätzlich, ob Payload passt
+                if not EXPECTED_PAYLOAD or payload.startswith(EXPECTED_PAYLOAD):
+                    print(f"✅ Matching device gefunden: {name} ({d.address})")
+                    found.append(d)
+                else:
+                    print(f"⚠️ Hersteller-ID stimmt, aber Payload passt nicht.")
 
     return found
 
 
 async def connect_to_device(device):
     """
-    Baut eine Verbindung zu einem Gerät auf und listet seine Services/Characteristics.
+    Baut eine Verbindung auf und listet Services & Characteristics.
     """
     print(f"🔗 Connecting to {device.name or 'N/A'} ({device.address}) ...")
     try:
@@ -60,13 +71,11 @@ async def connect_to_device(device):
 
 
 async def main():
-    # Suche nach Geräten, die die Ziel-UUID bewerben
     found_devices = await scan_for_devices(timeout=10)
     if not found_devices:
-        print("❌ No devices advertising the target UUID found.")
+        print("❌ Kein Gerät mit passender Manufacturer Data gefunden.")
         return
 
-    # Verbinde dich mit jedem gefundenen Gerät
     for dev in found_devices:
         await connect_to_device(dev)
         print("—" * 40)
