@@ -1,25 +1,32 @@
 #!/usr/bin/env python3
-# main.py – zentrale Steuerung
+# -*- coding: utf-8 -*-
+"""
+main.py – zentrales Steuerprogramm der RCU
+Startet BLE-Scanning und Verbindung (Central-Logik)
+"""
 
 import asyncio
-from dbus_fast.aio import MessageBus
-from dbus_fast import BusType
-from ble.central import start_advertising
-from ble.gatt_client import start_gatt_service
+from ble.central import scan_for_devices, connect_to_device
+
 
 async def main():
-    print("Starte BLE-System der RCU...")
-    bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
+    print("Starte Keyless-Access-System (BLE Central)...")
 
-    ad_manager, ad_path = await start_advertising(bus)
-    await start_gatt_service(bus)
+    # Scan nach Geräten mit passender Manufacturer Data
+    found_devices = await scan_for_devices(timeout=10)
 
-    try:
-        while True:
-            await asyncio.sleep(1)
-    except KeyboardInterrupt:
-        print("Beende BLE-System")
-        await ad_manager.call_unregister_advertisement(ad_path, {})
+    if not found_devices:
+        print("Kein passendes Gerät gefunden.")
+        return
+
+    # Verbindung zu allen gefundenen Geräten aufbauen
+    for dev in found_devices:
+        await connect_to_device(dev)
+        print("—" * 40)
+        await asyncio.sleep(2)
+
+    print("Scan-Durchlauf abgeschlossen.")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
