@@ -4,8 +4,8 @@
 import asyncio
 from dbus_fast.aio import MessageBus
 from dbus_fast import BusType
-from ble.advertising import start_advertising
-from ble.gatt_service import start_gatt_service
+from ble.central import start_advertising
+from ble.gatt_client import start_gatt_service
 
 async def main():
     print("Starte BLE-System der RCU...")
