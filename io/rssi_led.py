@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-# test_dio6.py – Schneller Funktionstest für DIO6 über Test_owa4x
+# test_dio6.py – Funktionstest für DIO6 (angepasst an ARIES Test Program)
 
 import os
 import time
 
 def dio6_on():
-    os.system('echo -e "IOSet DIGOUT 6 0\nEXIT\n" | Test_owa4x')
+    # Setze Port 6 auf 0 (aktiv)
+    os.system('echo -e "IOwrite_port 6 0 0xFF\nEXIT\n" | Test_owa4x')
 
 def dio6_off():
-    os.system('echo -e "IOSet DIGOUT 6 1\nEXIT\n" | Test_owa4x')
+    # Setze Port 6 auf 1 (inaktiv)
+    os.system('echo -e "IOwrite_port 6 1 0xFF\nEXIT\n" | Test_owa4x')
 
 print("Starte DIO6-Test...")
 for i in range(3):
