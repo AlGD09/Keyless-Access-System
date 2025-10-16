@@ -1,83 +1,64 @@
-# ble/gatt_service.py
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+ble/gatt_client.py – BLE Challenge-Response-Client auf der RCU
+"""
+
 import asyncio
-from dbus_fast import BusType
-from dbus_fast.aio import MessageBus
-from dbus_fast.service import ServiceInterface, method, dbus_property, PropertyAccess
+import os
+from bleak import BleakClient
 
-BLUEZ_SERVICE_NAME = "org.bluez"
-ADAPTER_OBJECT_PATH = "/org/bluez/hci0"
-GATT_MANAGER_INTERFACE = "org.bluez.GattManager1"
-APPLICATION_OBJECT_PATH = "/org/bluez/example/app"
-SERVICE_PATH = "/org/bluez/example/service0"
-CHAR_CHALLENGE_PATH = "/org/bluez/example/service0/char0"
-CHAR_RESPONSE_PATH = "/org/bluez/example/service0/char1"
+# UUIDs des Custom-Services
+SERVICE_UUID = "0000aaa0-0000-1000-8000-aabbccddeeff"
+CHAR_CHALLENGE = "0000aaa2-0000-1000-8000-aabbccddeeff"
+CHAR_RESPONSE = "0000aaa1-0000-1000-8000-aabbccddeeff"
 
-class ChallengeCharacteristic(ServiceInterface):
-    def __init__(self):
-        super().__init__("org.bluez.GattCharacteristic1")
-        self.uuid = "12345678-1234-5678-1234-56789abcdef1"
-        self.value = bytearray(b"Hallo")
+# Fester Referenz-Token (z. B. symmetrischer Schlüssel für Testzwecke)
+EXPECTED_TOKEN = b"\xDE\xAD\xBE\xEF"
 
-    @dbus_property(access=PropertyAccess.READ)
-    def UUID(self) -> "s":
-        return self.uuid
 
-    @dbus_property(access=PropertyAccess.READ)
-    def Flags(self) -> "as":
-        return ["read"]
+async def perform_challenge_response(device):
+    """Führt den Challenge-Response-Austausch mit dem angegebenen Gerät durch."""
+    print(f"🔗 Starte Challenge-Response mit {device.name or 'N/A'} ({device.address})...")
 
-    @method()
-    def ReadValue(self, options: "a{sv}") -> "ay":
-        print("📡 ChallengeCharacteristic wurde gelesen.")
-        return list(self.value)
+    try:
+        async with BleakClient(device.address) as client:
+            if not client.is_connected:
+                print("❌ Verbindung fehlgeschlagen.")
+                return False
 
-class ResponseCharacteristic(ServiceInterface):
-    def __init__(self):
-        super().__init__("org.bluez.GattCharacteristic1")
-        self.uuid = "12345678-1234-5678-1234-56789abcdef2"
-        self.value = bytearray()
+            print("✅ Verbunden – Suche nach Service und Characteristics ...")
 
-    @dbus_property(access=PropertyAccess.READ)
-    def UUID(self) -> "s":
-        return self.uuid
+            # Verfügbare Services abrufen
+            await client.get_services()
 
-    @dbus_property(access=PropertyAccess.READ)
-    def Flags(self) -> "as":
-        return ["write"]
+            if SERVICE_UUID not in [s.uuid for s in client.services]:
+                print("⚠️ Gesuchter Service nicht gefunden.")
+                return False
 
-    @method()
-    def WriteValue(self, value: "ay", options: "a{sv}"):
-        self.value = bytearray(value)
-        print(f"✏️  ResponseCharacteristic geschrieben: {self.value.decode(errors='ignore')}")
+            # Challenge erzeugen (16 Byte)
+            challenge = os.urandom(16)
+            print(f"🎲 Challenge erzeugt: {challenge.hex()}")
 
-class RCUService(ServiceInterface):
-    def __init__(self):
-        super().__init__("org.bluez.GattService1")
-        self.uuid = "12345678-1234-5678-1234-56789abcdef0"
-        self.primary = True
+            # Challenge an das Smartphone senden
+            await client.write_gatt_char(CHAR_CHALLENGE, challenge)
+            print("📤 Challenge an Smartphone gesendet.")
 
-    @dbus_property(access=PropertyAccess.READ)
-    def UUID(self) -> "s":
-        return self.uuid
+            # Kurz warten, damit Smartphone Zeit hat zu antworten
+            await asyncio.sleep(10.0)
 
-    @dbus_property(access=PropertyAccess.READ)
-    def Primary(self) -> "b":
-        return self.primary
+            # Antwort lesen
+            response = await client.read_gatt_char(CHAR_RESPONSE)
+            print(f"📥 Response empfangen: {response.hex()}")
 
-async def start_gatt_service(bus):
-    introspection = await bus.introspect(BLUEZ_SERVICE_NAME, ADAPTER_OBJECT_PATH)
-    obj = bus.get_proxy_object(BLUEZ_SERVICE_NAME, ADAPTER_OBJECT_PATH, introspection)
-    gatt_manager = obj.get_interface(GATT_MANAGER_INTERFACE)
+            # Token-Prüfung (Beispiel: Response muss mit EXPECTED_TOKEN enden)
+            if response.endswith(EXPECTED_TOKEN):
+                print("✅ Tokenprüfung erfolgreich – Authentifizierung bestanden.")
+                return True
+            else:
+                print("❌ Tokenprüfung fehlgeschlagen.")
+                return False
 
-    service = RCUService()
-    char_challenge = ChallengeCharacteristic()
-    char_response = ResponseCharacteristic()
-
-    bus.export(SERVICE_PATH, service)
-    bus.export(CHAR_CHALLENGE_PATH, char_challenge)
-    bus.export(CHAR_RESPONSE_PATH, char_response)
-
-    await gatt_manager.call_register_application("/org/bluez/example/app", {})
-    print("✅ GATT Service registriert (Challenge + Response verfügbar)")
-
-    return gatt_manager
+    except Exception as e:
+        print(f"⚠️ Fehler bei Challenge-Response: {e}")
+        return False

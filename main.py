@@ -2,17 +2,18 @@
 # -*- coding: utf-8 -*-
 """
 main.py – zentrales Steuerprogramm der RCU
-Startet BLE-Scanning und Verbindung (Central-Logik)
+Startet BLE-Scanning und führt den Challenge-Response-Prozess aus.
 """
 
 import asyncio
-from ble.central import scan_for_devices, connect_to_device
+from ble.central import scan_for_devices
+from ble.gatt_client import perform_challenge_response
 
 
 async def main():
     print("🚗 Starte Keyless-Access-System (BLE Central)...")
 
-    # Scan nach Geräten mit passender Manufacturer Data
+    # 1️⃣ Scanne nach Geräten mit passender Manufacturer Data
     found_devices = await scan_for_devices(timeout=10)
 
     if not found_devices:
@@ -29,13 +30,20 @@ async def main():
         print(f"    → Payload   : {payload.hex()}")
     print("")
 
-    # Verbindung zu jedem Gerät herstellen
-    for info in found_devices:
-        await connect_to_device(info)
-        print("—" * 40)
-        await asyncio.sleep(2)
+    # 2️⃣ Wähle erstes gefundenes Gerät aus (du kannst später Auswahl erweitern)
+    selected_device = found_devices[0]["device"]
+    print(f"📲 Verwende Gerät: {selected_device.name or 'N/A'} ({selected_device.address})")
 
-    print("✅ Scan-Durchlauf abgeschlossen.")
+    # 3️⃣ Führe Challenge-Response-Prozess aus
+    success = await perform_challenge_response(selected_device)
+
+    # 4️⃣ Reaktion je nach Ergebnis
+    if success:
+        print("🔓 Authentifizierung erfolgreich – Zugang freigegeben.")
+    else:
+        print("🔒 Authentifizierung fehlgeschlagen – Zugang verweigert.")
+
+    print("\n✅ Prozess abgeschlossen.")
 
 
 if __name__ == "__main__":
