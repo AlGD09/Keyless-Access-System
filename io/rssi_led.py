@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-# test_dio6.py – Funktionstest für DIO6 (angepasst an ARIES Test Program)
+# rssi_led.py – Funktionstest für DIO6 (korrekt für ARIES Test Program)
 
 import os
 import time
 
 def dio6_on():
-    # Setze Port 6 auf 0 (aktiv)
-    os.system('echo -e "IOwrite_port 6 0 0xFF\nEXIT\n" | Test_owa4x')
+    # Aktivieren (LOW → Relais an)
+    os.system('echo -e "IOSet DIGOUT 6 0\nEXIT\n" | Test_owa4x')
 
 def dio6_off():
-    # Setze Port 6 auf 1 (inaktiv)
-    os.system('echo -e "IOwrite_port 6 1 0xFF\nEXIT\n" | Test_owa4x')
+    # Deaktivieren (HIGH → Relais aus)
+    os.system('echo -e "IOSet DIGOUT 6 1\nEXIT\n" | Test_owa4x')
 
 print("Starte DIO6-Test...")
 for i in range(3):
