@@ -10,7 +10,7 @@ import asyncio
 from bleak import BleakScanner, BleakClient
 
 # Gesuchte Service-UUID (aus nRF Connect: 0x12345678)
-TARGET_SERVICE_UUID = "12345678-0000-1000-8000-00805f9b34fb"
+TARGET_SERVICE_UUID = "0000180a-0000-1000-8000-00805f9b34fb"
 
 
 async def scan_for_devices(timeout: int = 10):
