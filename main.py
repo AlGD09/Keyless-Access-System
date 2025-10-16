@@ -1,50 +1,60 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-main.py – zentrales Steuerprogramm der RCU
-Startet BLE-Scanning und führt den Challenge-Response-Prozess aus.
-"""
 
 import asyncio
 from ble.central import scan_for_devices
 from ble.gatt_client import perform_challenge_response
+from io.output_control import dio6_set
+from bleak import BleakClient
 
+# RSSI-Schwelle für Freigabe (z. B. Gerät in Reichweite)
+RSSI_THRESHOLD = -80  # dBm
+RSSI_INTERVAL = 3     # Sekunden zwischen RSSI-Abfragen
+
+async def monitor_rssi(address: str):
+    """Überwacht die Signalstärke und steuert DIO6 entsprechend."""
+    async with BleakClient(address) as client:
+        if not client.is_connected:
+            print("Keine aktive Verbindung zur RSSI-Überwachung.")
+            return
+
+        print(f"Starte RSSI-Überwachung für {address} (Schwelle: {RSSI_THRESHOLD} dBm)")
+        while True:
+            try:
+                rssi = await client.get_rssi()
+                print(f"Aktueller RSSI: {rssi} dBm")
+
+                if rssi is not None and rssi > RSSI_THRESHOLD:
+                    dio6_set(0)  # grün (Freigabe)
+                else:
+                    dio6_set(1)  # rot (zu weit entfernt)
+
+                await asyncio.sleep(RSSI_INTERVAL)
+
+            except Exception as e:
+                print(f"Fehler beim RSSI-Check: {e}")
+                dio6_set(1)  # Sicherheit: Sperre aktivieren
+                break
 
 async def main():
     print("Starte Keyless-Access-System (BLE Central)...")
-
-    # Scanne nach Geräten mit passender Manufacturer Data
     found_devices = await scan_for_devices(timeout=10)
-
     if not found_devices:
         print("Kein passendes Gerät gefunden.")
         return
 
-    print("\nGefundene Geräte mit passender Manufacturer Data:")
-    for idx, info in enumerate(found_devices, start=1):
-        d = info["device"]
-        cid = info["company_id"]
-        payload = info["payload"]
-        print(f" {idx}. {d.name or 'N/A'} ({d.address})")
-        print(f"    → Company ID: 0x{cid:04X}")
-        print(f"    → Payload   : {payload.hex()}")
-    print("")
-
-    # Wähle erstes gefundenes Gerät aus (du kannst später Auswahl erweitern)
     selected_device = found_devices[0]["device"]
     print(f"Verwende Gerät: {selected_device.name or 'N/A'} ({selected_device.address})")
 
-    # Führe Challenge-Response-Prozess aus
     success = await perform_challenge_response(selected_device)
 
-    # Reaktion je nach Ergebnis
     if success:
-        print("Authentifizierung erfolgreich – Zugang freigegeben.")
+        print("Authentifizierung erfolgreich – Freigabe aktiv.")
+        dio6_set(0)  # sofort grün
+        await monitor_rssi(selected_device.address)
     else:
         print("Authentifizierung fehlgeschlagen – Zugang verweigert.")
-
-    print("\nProzess abgeschlossen.")
-
+        dio6_set(1)  # rot
 
 if __name__ == "__main__":
     asyncio.run(main())
