@@ -8,7 +8,7 @@ from rcu_io.DIO6 import dio6_set
 from bleak import BleakScanner
 
 # RSSI-Schwelle für Freigabe (z. B. Gerät in Reichweite)
-RSSI_THRESHOLD = -80   # dBm
+RSSI_THRESHOLD = -65   # dBm
 RSSI_INTERVAL = 3      # Sekunden zwischen RSSI-Abfragen
 
 
