@@ -8,7 +8,7 @@ import hmac
 import hashlib
 
 # Gemeinsamer Schlüssel (Testversion)
-SHARED_KEY = b"this_is_test_key_32bytes____"
+SHARED_KEY = b"this_is_test_key_32bytes5555"
 
 def generate_expected_response(challenge: bytes) -> bytes:
     """
