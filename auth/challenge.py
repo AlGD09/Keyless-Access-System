@@ -9,7 +9,7 @@ import hashlib
 
 # Gemeinsamer Schlüssel (Testversion)
 # SHARED_KEY = b"this_is_test_key_32bytes5555"
-SHARED_KEY = bytes.fromhex("6b04a2e4b9e74b869d8a022290155d74")
+SHARED_KEY = bytes.fromhex("296695f03a22452ca59ecd0eeb5e805c")
 
 def generate_expected_response(challenge: bytes) -> bytes:
     """
