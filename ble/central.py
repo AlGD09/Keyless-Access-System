@@ -10,18 +10,22 @@ from bleak import BleakScanner, BleakClient
 from cloud.api_client import get_target_manufacturer_id
 import asyncio
 
-# Gesuchter Manufacturer Identifier (16-bit Company ID)
-TARGET_MANUFACTURER_ID = get_target_manufacturer_id()
-
-if TARGET_MANUFACTURER_ID:
-    print(f"[BLE] Ziel-Manufacturer-ID aus Cloud: {TARGET_MANUFACTURER_ID}")
+TARGET_DEVICE_ID = get_target_manufacturer_id()
+if TARGET_DEVICE_ID:
+    print(f"[BLE] Ziel-Device-ID aus Cloud: {TARGET_DEVICE_ID}")
+    try:
+        TARGET_DEVICE_BYTES = bytes.fromhex(TARGET_DEVICE_ID)
+    except ValueError:
+        print("[BLE] Ungültige Device-ID (kein Hex). Deaktiviere Payload-Filter.")
+        TARGET_DEVICE_BYTES = None
 else:
-    print("[BLE] Keine gültige Manufacturer-ID erhalten, Standardwert wird verwendet.")
-    TARGET_MANUFACTURER_ID = "0000000000000000"  # Fallback
+    print("[BLE] Keine gültige Device-ID erhalten – deaktiviere Payload-Filter.")
+    TARGET_DEVICE_BYTES = None
+
+# Gesuchter Manufacturer Identifier (16-bit Company ID)
+TARGET_MANUFACTURER_ID = 0xFFFF
 
 
-# Optional: erwarteter Payload (leer = egal)
-EXPECTED_PAYLOAD = b""
 
 
 async def scan_for_devices(timeout: int = 10):
@@ -38,17 +42,27 @@ async def scan_for_devices(timeout: int = 10):
             continue
 
         for comp_id, payload in mdata.items():
+            try:
+                payload_hex = payload.hex()
+            except Exception:
+                payload_hex = str(payload)
             # Alle Manufacturer-Daten anzeigen
             print(f"📡 {name} ({d.address}) → CompanyID: 0x{comp_id:04X}, Data: {payload.hex()}")
 
-            if comp_id == TARGET_MANUFACTURER_ID:
-                if not EXPECTED_PAYLOAD or payload.startswith(EXPECTED_PAYLOAD):
-                    print(f"✅ Matching device gefunden: {name} ({d.address})")
-                    found.append({
-                        "device": d,
-                        "company_id": comp_id,
-                        "payload": payload
-                    })
+            if comp_id != TARGET_MANUFACTURER_ID:
+                continue
+
+            if TARGET_DEVICE_BYTES is not None and TARGET_DEVICE_BYTES not in payload:
+                print("↪︎ 0xFFFF passt, aber Device-ID nicht im Payload → überspringe.")
+                continue
+
+            print(f"✅ Matching device gefunden: {name} ({d.address})")
+            found.append({
+                "device": d,
+                "company_id": comp_id,
+                "payload": payload
+            })
+            
     return found
 
 
