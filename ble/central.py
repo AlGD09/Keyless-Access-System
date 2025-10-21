@@ -7,10 +7,19 @@ und verbindet sich automatisch mit ihnen.
 """
 
 from bleak import BleakScanner, BleakClient
+from cloud.api_client import get_target_manufacturer_id
 import asyncio
 
 # Gesuchter Manufacturer Identifier (16-bit Company ID)
-TARGET_MANUFACTURER_ID = 0xFFFF
+TARGET_MANUFACTURER_ID = get_target_manufacturer_id()
+
+if TARGET_MANUFACTURER_ID:
+    print(f"[BLE] Ziel-Manufacturer-ID aus Cloud: {TARGET_MANUFACTURER_ID}")
+else:
+    print("[BLE] Keine gültige Manufacturer-ID erhalten, Standardwert wird verwendet.")
+    TARGET_MANUFACTURER_ID = "0000000000000000"  # Fallback
+
+
 # Optional: erwarteter Payload (leer = egal)
 EXPECTED_PAYLOAD = b""
 
