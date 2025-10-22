@@ -10,10 +10,11 @@ BASE_URL = os.getenv("CLOUD_BASE_URL", "http://10.42.0.1:8080/api")
 class CloudError(RuntimeError):
     pass
 
+
 def fetch_token_by_numeric_id(device_numeric_id: int, timeout_s: float = 4.0) -> str:
     """
     GET /api/devices/token/{id}
-    Erwartet entweder {"token":"<hex>"} oder Plain-Text "<hex>".
+    Erwartet entweder {"token":"<hex>"} oder {"auth_token":"<hex>"} oder Plain-Text "<hex>".
     Rückgabe: Hex-String (lower), ohne 0x.
     """
     url = f"{BASE_URL}/devices/token/{device_numeric_id}"
@@ -23,12 +24,30 @@ def fetch_token_by_numeric_id(device_numeric_id: int, timeout_s: float = 4.0) ->
     except requests.RequestException as e:
         raise CloudError(f"Token GET failed for id={device_numeric_id}: {e}") from e
 
-    ctype = (r.headers.get("Content-Type") or "").lower()
-    token_hex = r.json().get("token") if "application/json" in ctype else r.text.strip()
-    token_hex = (token_hex or "").strip().lower()
-    if not token_hex or not _is_hex(token_hex):
-        raise CloudError(f"Ungültiges Token-Format für id={device_numeric_id}: {token_hex!r}")
-    return token_hex
+    token_raw = ""
+    body = (r.text or "").strip()
+
+    # --- JSON lesen, falls möglich ---
+    try:
+        js = r.json()
+        if isinstance(js, dict):
+            if "token" in js:
+                token_raw = str(js["token"]).strip()
+            elif "auth_token" in js:                # <–– wichtig: dein tatsächliches Feld
+                token_raw = str(js["auth_token"]).strip()
+    except Exception:
+        pass
+
+    # --- Falls kein JSON erkannt, Plain-Text verwenden ---
+    if not token_raw and body:
+        token_raw = body
+
+    token_raw = token_raw.strip().lower()
+    if not token_raw or not _is_hex(token_raw):
+        raise CloudError(f"Ungültiges Token-Format für id={device_numeric_id}: {token_raw!r}")
+
+    return token_raw
+
 
 def _is_hex(s: str) -> bool:
     try:
