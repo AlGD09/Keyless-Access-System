@@ -4,7 +4,7 @@
 import requests
 from urllib.parse import quote
 
-def get_target_manufacturer_id(rcu_id="A116G61", base_url="http://10.106.237.181:8080", timeout_s=4):
+def get_target_manufacturer_id(rcu_id="A116G61", base_url="http://10.42.0.1:8080", timeout_s=4):
     """
     Fragt die Cloud nach dem zugewiesenen Smartphone und gibt die deviceId (hex) zurück.
     - rcu_id wird getrimmt & gequotet (verhindert Whitespaces in der URL)
