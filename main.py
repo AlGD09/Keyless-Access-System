@@ -15,8 +15,8 @@ from auth.challenge import set_shared_key_hex
 
 # RSSI-Schwelle für Freigabe (z. B. Gerät in Reichweite)
 RSSI_THRESHOLD = -70  # dBm
-RSSI_INTERVAL = 3      # Sekunden zwischen RSSI-Abfragen
-
+RSSI_INTERVAL = 1      # Sekunden zwischen RSSI-Abfragen
+RETRY_DELAY = 1
 
 async def monitor_rssi(address: str):
     """Überwacht die Signalstärke und steuert DIO6 entsprechend."""
@@ -71,40 +71,46 @@ def init_shared_key_from_cloud() -> str:
         raise RuntimeError(f"Token konnte nicht geladen werden: {e}") from e
 
     set_shared_key_hex(token_hex)
-    print(f"[RCU] Shared Key gesetzt (from cloud). deviceId={device_id}, id={numeric_id}")
+    print(f"Shared Key gesetzt (from cloud). deviceId={device_id}, id={numeric_id}")
     return device_id
 
 
 
 
 async def main():
-    print("Starte Keyless-Access-System (BLE Central)...")
+    while True: 
+        print("Starte Verbindungsversuch...")
 
-    try:
-        device_id_cloud = init_shared_key_from_cloud()
-    except Exception as e:
-        print(f"[RCU] Initialisierung fehlgeschlagen: {e}")
-        dio6_set(1)
-        return
+        try:
+            device_id_cloud = init_shared_key_from_cloud()
+        except Exception as e:
+            print(f"Cloud Verbindung fehlgeschlagen: {e}")
+            dio6_set(1)
+            await asyncio.sleep(RETRY_DELAY)
+            continue
 
 
-    found_devices = await scan_for_devices(timeout=10)
-    if not found_devices:
-        print("Kein passendes Gerät gefunden.")
-        return
+        found_devices = await scan_for_devices(timeout=10)
+        if not found_devices:
+            print("Kein passendes Gerät gefunden. Neuer Versuch in wenigen Sekunden...")
+            dio6_set(1)
+            await asyncio.sleep(RETRY_DELAY)
+            continue
 
-    selected_device = found_devices[0]["device"]
-    print(f"Verwende Gerät: {selected_device.name or 'N/A'} ({selected_device.address})")
+        selected_device = found_devices[0]["device"]
+        print(f"Verwende Gerät: {selected_device.name or 'N/A'} ({selected_device.address})")
 
-    success = await perform_challenge_response(selected_device)
+        success = await perform_challenge_response(selected_device)
 
-    if success:
-        print("Authentifizierung erfolgreich – Freigabe aktiv.")
-        dio6_set(0)  # sofort grün
-        await monitor_rssi(selected_device.address)
-    else:
-        print("Authentifizierung fehlgeschlagen – Zugang verweigert.")
-        dio6_set(1)  # rot
+        if success:
+            print("Authentifizierung erfolgreich – Freigabe aktiv.")
+            dio6_set(0)  # sofort grün
+            await monitor_rssi(selected_device.address)
+        else:
+            print("Authentifizierung fehlgeschlagen – Zugang verweigert.")
+            dio6_set(1)  # rot
+            await asyncio.sleep(RETRY_DELAY)
+            continue
 
 
 if __name__ == "__main__":
