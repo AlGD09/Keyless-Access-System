@@ -29,7 +29,7 @@ def get_assigned_smartphone(rcu_id="A116G61", base_url="http://10.106.237.181:80
         return None
 
 
-def get_target_manufacturer_id(rcu_id="A116G61", base_url="http://10.42.0.1:8080", timeout_s=4):
+def get_target_manufacturer_id(rcu_id="A116G61", base_url="http://10.106.237.181:8080", timeout_s=4):
     """
     Bestehende API für deviceId (bleibt erhalten).
     Nutzt intern get_assigned_smartphone.
