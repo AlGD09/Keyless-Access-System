@@ -16,7 +16,7 @@ from auth.challenge import set_shared_key_hex
 # RSSI-Schwelle für Freigabe (z. B. Gerät in Reichweite)
 RSSI_THRESHOLD = -70  # dBm
 RSSI_INTERVAL = 3      # Sekunden zwischen RSSI-Abfragen
-RETRY_DELAY = 3
+RETRY_DELAY = 10
 
 async def monitor_rssi(address: str):
     """Überwacht die Signalstärke und steuert DIO6 entsprechend."""
