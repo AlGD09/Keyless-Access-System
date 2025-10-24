@@ -29,20 +29,33 @@ async def perform_challenge_response(device):
                 return False
 
             print("✅ Verbunden – Suche nach Service und Characteristics ...")
-            await client.get_services()
 
-            if SERVICE_UUID not in [s.uuid for s in client.services]:
-                print("❌ Gesuchter Service nicht gefunden.")
+            # Services abrufen
+            services = await client.get_services()
+
+            # Alle Characteristics mit unseren Ziel-UUIDs finden
+            chars_challenge = [c for c in services.characteristics if c.uuid.lower() == CHAR_CHALLENGE.lower()]
+            chars_response  = [c for c in services.characteristics if c.uuid.lower() == CHAR_RESPONSE.lower()]
+
+            if not chars_challenge or not chars_response:
+                print("❌ Gesuchte Characteristics nicht gefunden.")
                 return False
 
+            # Nimm den ersten Eintrag (typischerweise richtig)
+            char_challenge = chars_challenge[0]
+            char_response  = chars_response[0]
+
+            print(f"Verwende Challenge-Char {char_challenge.handle}, Response-Char {char_response.handle}")
+
+            # Challenge senden
             challenge = os.urandom(16)
             print(f"Challenge erzeugt: {challenge.hex()}")
-
-            await client.write_gatt_char(CHAR_CHALLENGE, challenge)
+            await client.write_gatt_char(char_challenge.handle, challenge)
             print("Challenge an Smartphone gesendet.")
             await asyncio.sleep(5.0)
 
-            response = await client.read_gatt_char(CHAR_RESPONSE)
+            # Antwort lesen
+            response = await client.read_gatt_char(char_response.handle)
 
             hex_value = response.hex()
             try:
