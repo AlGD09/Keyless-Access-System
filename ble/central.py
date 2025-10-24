@@ -26,7 +26,7 @@ async def scan_for_devices(timeout: int = 10):
       - TARGET_DEVICE_BYTES im Payload enthalten ist.
     HINWEIS: Wenn keine TARGET_DEVICE_BYTES vorliegen, wird NICHT gematcht.
     """
-    print(f"🔍 Scanning for BLE devices for {timeout} s ...")
+    print(f"Scanning for BLE devices for {timeout} s ...")
     devices = await BleakScanner.discover(timeout=timeout)
     found = []
 
