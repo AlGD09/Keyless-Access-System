@@ -7,6 +7,7 @@ und liefert die Treffer an main.py zurück (main steuert Connect/Challenge).
 """
 
 import asyncio
+import contextlib
 from bleak import BleakScanner, BleakClient
 
 # ---------------------------------------------------------
@@ -68,26 +69,60 @@ async def scan_for_devices(timeout: int = 10):
     return found
 
 
-async def connect_to_device(device):
+async def find_target_device_keep_scanning(timeout: int = 10):
     """
-    Optional: direkter Connect + Servicelisting (wird von main.py aktuell nicht genutzt,
-    aber behalten wir für Debug).
+    Startet einen Scan und liefert (device, scanner) zurück, sobald das Zielgerät
+    gefunden wurde. Der Scanner bleibt AKTIV, bis der Aufrufer ihn stoppt.
     """
-    d = device["device"]
-    print(f"🔗 Connecting to {d.name or 'N/A'} ({d.address}) ...")
+    print(f"Scanning for BLE devices for {timeout} s (Scanner bleibt aktiv) ...")
+    scanner = BleakScanner(adapter="hci0")
+    await scanner.start()
 
+    selected = None
     try:
-        async with BleakClient(d.address) as client:
-            if client.is_connected:
-                print(f"✅ Connected to {d.name or 'N/A'} ({d.address})")
-                print("🔎 Discovering services ...")
-                await client.get_services()
-                for service in client.services:
-                    print(f"[Service] {service.uuid}")
-                    for char in service.characteristics:
-                        print(f"  [Characteristic] {char.uuid} (props: {char.properties})")
-                print("🔌 Disconnecting ...")
-            else:
-                print("❌ Connection failed.")
-    except Exception as e:
-        print(f"⚠️ Connection error: {e}")
+        end = asyncio.get_event_loop().time() + timeout
+        printed = set()
+
+        while asyncio.get_event_loop().time() < end and selected is None:
+            await asyncio.sleep(0.4)
+            for d in scanner.get_discovered_devices():
+                # Einmaliges Logging
+                if d.address not in printed:
+                    name = d.name or "N/A"
+                    mdata = d.metadata.get("manufacturer_data", {})
+                    if mdata:
+                        for comp_id, payload in mdata.items():
+                            try:
+                                payload_hex = payload.hex()
+                            except Exception:
+                                payload_hex = str(payload)
+                            print(f"📡 {name} ({d.address}) → CompanyID: 0x{comp_id:04X}, Data: {payload_hex}")
+                    printed.add(d.address)
+
+                # Matching
+                mdata = d.metadata.get("manufacturer_data", {})
+                if not mdata:
+                    continue
+                for comp_id, payload in mdata.items():
+                    if comp_id != TARGET_MANUFACTURER_ID:
+                        continue
+                    if TARGET_DEVICE_BYTES is None:
+                        continue
+                    if TARGET_DEVICE_BYTES in payload:
+                        print(f"✅ Matching device gefunden: {d.name or 'N/A'} ({d.address})")
+                        selected = d
+                        break
+                if selected:
+                    break
+
+        if selected is None:
+            await scanner.stop()
+            return None, None
+
+        # Scanner absichtlich NICHT stoppen – Aufrufer macht das später.
+        return selected, scanner
+
+    except Exception:
+        with contextlib.suppress(Exception):
+            await scanner.stop()
+        raise

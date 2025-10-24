@@ -11,27 +11,18 @@ CHAR_RESPONSE  = "0000aaa1-0000-1000-8001-aabbccddeeff"
 EXPECTED_TOKEN = b"\xDE\xAD\xBE\xEF"
 
 async def perform_challenge_response(device):
-    """Führt den Challenge-Response-Austausch mit dem angegebenen Gerät durch,
-    auch wenn das Gerät vorher noch nie verbunden war."""
-    
+    """Challenge-Response – robust auch ohne vorheriges Pairing.
+    Erwartet, dass der aufrufende Code den Scanner bereits gestartet hat
+    und erst nach dem Connect stoppt.
+    """
     print(f"Starte Challenge-Response mit {device.name or 'N/A'} ({device.address})...")
 
-    # 🔹 Schritt 1: Scannen, um sicherzustellen, dass BlueZ ein gültiges Device-Objekt besitzt
-    scanner = BleakScanner(adapter="hci0")
-    await scanner.start()
-    try:
-        print("Suche Gerät während aktivem Scan ...")
-        fresh = await BleakScanner.find_device_by_address(device.address, timeout=10.0)
-    finally:
-        await scanner.stop()
+    dev = device  # kein zweiter Scan!
 
-    dev = fresh or device
-    if dev is None:
-        print("❌ Gerät konnte nicht gefunden werden.")
-        return False
-
-    # 🔹 Schritt 2: Verbindung aufbauen
     try:
+        # kurzer Moment, damit BlueZ Properties setzt
+        await asyncio.sleep(0.2)
+
         async with BleakClient(dev, timeout=15.0, adapter="hci0") as client:
             if not client.is_connected:
                 print("❌ Verbindung fehlgeschlagen.")
@@ -44,7 +35,6 @@ async def perform_challenge_response(device):
                 print("❌ Gesuchter Service nicht gefunden.")
                 return False
 
-            # 🔹 Schritt 3: Challenge-Response-Austausch
             challenge = os.urandom(16)
             print(f"Challenge erzeugt: {challenge.hex()}")
 
@@ -63,7 +53,6 @@ async def perform_challenge_response(device):
             print(f"Response empfangen (HEX): {hex_value}")
             print(f"Response als Text: {text_value}")
 
-            # 🔹 Schritt 4: Authentifizierungsprüfung
             try:
                 if verify_response(challenge, response):
                     print("✅ Tokenprüfung erfolgreich – Authentifizierung bestanden.")

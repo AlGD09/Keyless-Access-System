@@ -94,14 +94,20 @@ async def main():
         print(f"Updated TARGET_DEVICE_BYTES: {central.TARGET_DEVICE_BYTES.hex()}")
 
 
-        found_devices = await scan_for_devices(timeout=10)
-        if not found_devices:
+        selected_device, scanner = await central.find_target_device_keep_scanning(timeout=10)
+        if not selected_device:
             print("Kein passendes Gerät gefunden. Neuer Versuch in wenigen Sekunden...")
             dio6_set(1)
             await asyncio.sleep(RETRY_DELAY)
             continue
 
-        selected_device = found_devices[0]["device"]
+        print(f"Verwende Gerät: {selected_device.name or 'N/A'} ({selected_device.address})")
+
+        try:
+            success = await perform_challenge_response(selected_device)  # Scanner läuft noch!
+        finally:
+            if scanner:
+                await scanner.stop()
         print(f"Verwende Gerät: {selected_device.name or 'N/A'} ({selected_device.address})")
 
         success = await perform_challenge_response(selected_device)
