@@ -30,32 +30,57 @@ async def perform_challenge_response(device):
 
             print("✅ Verbunden – Suche nach Service und Characteristics ...")
 
-            # Services abrufen
-            services = await client.get_services()
+            # Kompatibler Zugriff auf Services (je nach Bleak-Version)
+            try:
+                services = await client.get_services()
+            except Exception:
+                # Bei neueren Versionen ist services bereits eine Property
+                services = client.services
 
-            # Alle Characteristics mit unseren Ziel-UUIDs finden
-            chars_challenge = [c for c in services.characteristics if c.uuid.lower() == CHAR_CHALLENGE.lower()]
-            chars_response  = [c for c in services.characteristics if c.uuid.lower() == CHAR_RESPONSE.lower()]
+            # Unterschiedliche Darstellungsformen abfangen
+            characteristics = []
+            try:
+                # Neuere Bleak-Versionen
+                for s in services:
+                    if hasattr(s, "characteristics"):
+                        characteristics.extend(s.characteristics)
+            except TypeError:
+                # Ältere Bleak-Version (dict)
+                if isinstance(services, dict):
+                    characteristics = list(services.values())
+
+            # Debug-Ausgabe zur Sicherheit
+            print("🔎 Gefundene Characteristics:")
+            for c in characteristics:
+                try:
+                    print(f"  • UUID: {c.uuid}, Handle: {getattr(c, 'handle', '?')}")
+                except Exception:
+                    pass
+
+            # Filtern nach Ziel-UUIDs
+            chars_challenge = [c for c in characteristics if getattr(c, "uuid", "").lower() == CHAR_CHALLENGE.lower()]
+            chars_response  = [c for c in characteristics if getattr(c, "uuid", "").lower() == CHAR_RESPONSE.lower()]
 
             if not chars_challenge or not chars_response:
                 print("❌ Gesuchte Characteristics nicht gefunden.")
                 return False
 
-            # Nimm den ersten Eintrag (typischerweise richtig)
+            # Nimm den ersten Treffer
             char_challenge = chars_challenge[0]
             char_response  = chars_response[0]
 
-            print(f"Verwende Challenge-Char {char_challenge.handle}, Response-Char {char_response.handle}")
+            print(f"Verwende Challenge-Char (Handle {getattr(char_challenge, 'handle', '?')})")
+            print(f"Verwende Response-Char (Handle {getattr(char_response, 'handle', '?')})")
 
-            # Challenge senden
+            # 🔹 Challenge-Response-Ablauf
             challenge = os.urandom(16)
             print(f"Challenge erzeugt: {challenge.hex()}")
-            await client.write_gatt_char(char_challenge.handle, challenge)
+
+            await client.write_gatt_char(getattr(char_challenge, "handle", CHAR_CHALLENGE), challenge)
             print("Challenge an Smartphone gesendet.")
             await asyncio.sleep(5.0)
 
-            # Antwort lesen
-            response = await client.read_gatt_char(char_response.handle)
+            response = await client.read_gatt_char(getattr(char_response, "handle", CHAR_RESPONSE))
 
             hex_value = response.hex()
             try:
