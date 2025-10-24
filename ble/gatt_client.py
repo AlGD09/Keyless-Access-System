@@ -17,7 +17,7 @@ async def perform_challenge_response(device):
     print(f"Starte Challenge-Response mit {device.name or 'N/A'} ({device.address})...")
 
     try:
-        async with BleakClient(device.address) as client:
+        async with BleakClient(device, timeout=10.0, adapter="hci0") as client:
             if not client.is_connected:
                 print("Verbindung fehlgeschlagen.")
                 return False
