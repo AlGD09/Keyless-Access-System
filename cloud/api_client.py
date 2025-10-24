@@ -2,7 +2,7 @@
 import requests
 from urllib.parse import quote
 
-def get_assigned_smartphone(rcu_id="A116G61", base_url="http://10.191.160.181:8080", timeout_s=4):
+def get_assigned_smartphone(rcu_id="A116G61", base_url="http://10.191.160.181:8080", timeout_s=10):
     """
     Fragt die Cloud nach dem zugewiesenen Smartphone und gibt das gesamte JSON-Objekt zurück,
     z.B.: {"id": 2, "deviceId": "bd45e75870af93c2", ...}
@@ -29,7 +29,7 @@ def get_assigned_smartphone(rcu_id="A116G61", base_url="http://10.191.160.181:80
         return None
 
 
-def get_target_manufacturer_id(rcu_id="A116G61", base_url="http://10.191.160.181:8080", timeout_s=4):
+def get_target_manufacturer_id(rcu_id="A116G61", base_url="http://10.191.160.181:8080", timeout_s=10):
     """
     Bestehende API für deviceId (bleibt erhalten).
     Nutzt intern get_assigned_smartphone.
