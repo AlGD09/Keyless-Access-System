@@ -85,7 +85,7 @@ async def find_target_device_keep_scanning(timeout: int = 10):
 
         while asyncio.get_event_loop().time() < end and selected is None:
             await asyncio.sleep(0.4)
-            for d in scanner.get_discovered_devices():
+            for d in await scanner.get_discovered_devices():
                 # Einmaliges Logging
                 if d.address not in printed:
                     name = d.name or "N/A"
