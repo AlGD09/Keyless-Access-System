@@ -8,6 +8,7 @@ import asyncio
 import os
 from bleak import BleakClient
 from auth.challenge import verify_response
+import subprocess
 
 # UUIDs des Custom-Services
 SERVICE_UUID = "0000aaa0-0000-1000-8000-aabbccddeeff"
@@ -20,8 +21,10 @@ EXPECTED_TOKEN = b"\xDE\xAD\xBE\xEF"
 
 async def perform_challenge_response(device):
     print(f"Starte Challenge-Response mit {device.name or 'N/A'} ({device.address})...")
-    client = None  # <-- hinzufügen
+    client = None  
     try:
+        subprocess.run(["bluetoothctl", "disconnect", device.address], stdout=subprocess.DEVNULL)
+        await asyncio.sleep(1.0)
         client = BleakClient(device.address)
         await client.connect()
 
