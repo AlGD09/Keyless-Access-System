@@ -59,7 +59,7 @@ def init_shared_key_from_cloud() -> str:
     3) Setzt den Shared Key für die Challenge/Response
     Rückgabe: deviceId (für BLE-Filter/Logging)
     """
-    info = get_assigned_smartphone(rcu_id="A116G61", base_url="http://10.106.237.181:8080")
+    info = get_assigned_smartphone(rcu_id="A116G61", base_url="http://10.191.160.181:8080")
     if not info:
         raise RuntimeError("Kein zugewiesenes Smartphone erhalten.")
 

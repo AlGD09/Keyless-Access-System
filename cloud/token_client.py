@@ -5,7 +5,7 @@
 import os
 import requests
 
-BASE_URL = os.getenv("CLOUD_BASE_URL", "http://10.106.237.181:8080/api")
+BASE_URL = os.getenv("CLOUD_BASE_URL", "http://10.191.160.181:8080/api")
 
 class CloudError(RuntimeError):
     pass
