@@ -108,9 +108,9 @@ async def main():
         finally:
             if scanner:
                 await scanner.stop()
-        print(f"Verwende Gerät: {selected_device.name or 'N/A'} ({selected_device.address})")
+        # print(f"Verwende Gerät: {selected_device.name or 'N/A'} ({selected_device.address})")
 
-        success = await perform_challenge_response(selected_device)
+        # success = await perform_challenge_response(selected_device)
 
         if success:
             print("Authentifizierung erfolgreich – Freigabe aktiv.")
