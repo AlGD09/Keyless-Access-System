@@ -8,22 +8,11 @@ und liefert die Treffer an main.py zurück (main steuert Connect/Challenge).
 
 import asyncio
 from bleak import BleakScanner, BleakClient
-from cloud.api_client import get_target_manufacturer_id
 
 # ---------------------------------------------------------
 # Zielparameter aus Cloud laden (Device-ID des Smartphones)
 # ---------------------------------------------------------
-TARGET_DEVICE_ID = get_target_manufacturer_id()  # z. B. "bd45e75870af93c2"
-if TARGET_DEVICE_ID:
-    print(f"[BLE] Ziel-Device-ID aus Cloud: {TARGET_DEVICE_ID}")
-    try:
-        TARGET_DEVICE_BYTES = bytes.fromhex(TARGET_DEVICE_ID)
-    except ValueError:
-        print("[BLE] Ungültige Device-ID (kein Hex). Deaktiviere Payload-Filter.")
-        TARGET_DEVICE_BYTES = None
-else:
-    print("[BLE] Keine gültige Device-ID erhalten – Payload-Filter deaktiviert (keine Verbindung).")
-    TARGET_DEVICE_BYTES = None
+TARGET_DEVICE_BYTES = None
 
 # Gesuchter Manufacturer Identifier (16-bit Company ID)
 TARGET_MANUFACTURER_ID = 0xFFFF
@@ -62,7 +51,7 @@ async def scan_for_devices(timeout: int = 10):
 
             # 2) striktes Payload-Matching: ohne Cloud-ID verbinden wir NICHT
             if TARGET_DEVICE_BYTES is None:
-                print("↪︎ 0xFFFF gesehen, aber keine Device-ID verfügbar → überspringe.")
+                print("↪︎ 0xFFFF gesehen, aber keine Device-ID gesetzt → überspringe.")
                 continue
 
             if TARGET_DEVICE_BYTES not in payload:

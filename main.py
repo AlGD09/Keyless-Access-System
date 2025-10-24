@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
+from ble import central
 from ble.central import scan_for_devices
 from ble.gatt_client import perform_challenge_response
 from rcu_io.DIO6 import dio6_set
@@ -14,7 +15,7 @@ from auth.challenge import set_shared_key_hex
 
 
 # RSSI-Schwelle für Freigabe (z. B. Gerät in Reichweite)
-RSSI_THRESHOLD = -70  # dBm
+RSSI_THRESHOLD = -65  # dBm
 RSSI_INTERVAL = 3      # Sekunden zwischen RSSI-Abfragen
 RETRY_DELAY = 10
 
@@ -63,7 +64,7 @@ def init_shared_key_from_cloud() -> str:
         raise RuntimeError("Kein zugewiesenes Smartphone erhalten.")
 
     numeric_id = info["id"]        # für Token-Endpoint
-    device_id  = info["deviceId"]  # für BLE-Advertising (unverändert)
+    device_id  = info["deviceId"]  
 
     try:
         token_hex = fetch_token_by_numeric_id(int(numeric_id))  # holt Hex-String
@@ -88,6 +89,9 @@ async def main():
             dio6_set(1)
             await asyncio.sleep(RETRY_DELAY)
             continue
+
+        central.TARGET_DEVICE_BYTES = bytes.fromhex(device_id_cloud)
+        print(f"Updated TARGET_DEVICE_BYTES: {central.TARGET_DEVICE_BYTES.hex()}")
 
 
         found_devices = await scan_for_devices(timeout=10)
