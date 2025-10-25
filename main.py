@@ -90,8 +90,15 @@ async def main():
             await asyncio.sleep(RETRY_DELAY)
             continue
 
+        if not device_id_cloud:
+            print("⚠")
+            await asyncio.sleep(RETRY_DELAY)
+            continue
+
         central.TARGET_DEVICE_BYTES = bytes.fromhex(device_id_cloud)
         print(f"Updated TARGET_DEVICE_BYTES: {central.TARGET_DEVICE_BYTES.hex()}")
+
+        print("⚠⚠")
 
 
         selected_device, scanner = await central.find_target_device_keep_scanning(timeout=10)

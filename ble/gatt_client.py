@@ -24,7 +24,7 @@ async def perform_challenge_response(device):
         await asyncio.sleep(0.2)
 
         async with BleakClient(dev, timeout=15.0, adapter="hci0") as client:
-            if not client.is_connected:
+            if not await client.is_connected:
                 print("❌ Verbindung fehlgeschlagen.")
                 return False
 
@@ -80,7 +80,11 @@ async def perform_challenge_response(device):
             print("Challenge an Smartphone gesendet.")
             await asyncio.sleep(5.0)
 
-            response = await client.read_gatt_char(getattr(char_response, "handle", CHAR_RESPONSE))
+            try: 
+                response = await client.read_gatt_char(getattr(char_response, "handle", CHAR_RESPONSE))
+            except Exception as e: 
+                print(f"Fehler beim Lesen der Response: {e}")
+                return False
 
             hex_value = response.hex()
             try:
