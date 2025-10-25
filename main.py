@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os 
+import sys
 import asyncio
 import importlib
 from ble import central
@@ -127,4 +129,13 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except Exception as e:
+        # Wenn der bekannte BlueZ-Fehler auftaucht → Neustart des gesamten Programms
+        if "org.bluez.GattService1" in str(e):
+            print(" BlueZ-GattService-Fehler erkannt – starte Programm neu ...")
+            os.execv(sys.executable, [sys.executable] + sys.argv)
+        else:
+            # alle anderen Fehler normal ausgeben
+            raise

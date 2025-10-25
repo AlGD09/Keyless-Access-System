@@ -72,19 +72,18 @@ async def perform_challenge_response(device):
                     print("❌ Gesuchte Characteristics nicht gefunden.")
                     return False
 
-            # 🔹 Challenge-Response-Ablauf (nur UUIDs an Bleak übergeben!)
+            # Challenge-Response-Ablauf (nur UUIDs an Bleak übergeben!)
             import os
             challenge = os.urandom(16)
             print(f"Challenge erzeugt: {challenge.hex()}")
 
-            # 👉 WICHTIG: nicht mit Handles schreiben/lesen, sondern mit UUID
+            # WICHTIG: nicht mit Handles schreiben/lesen, sondern mit UUID
             await client.write_gatt_char(CHAR_CHALLENGE, challenge)
             print("Challenge an Smartphone gesendet.")
             await asyncio.sleep(0.2)  # kurze Luft für Phone-App
 
             response = await client.read_gatt_char(CHAR_RESPONSE)
 
-            # (Rest wie gehabt: Ausgabe + verify_response(...))
             hex_value = response.hex()
             try:
                 text_value = response.decode("utf-8")
