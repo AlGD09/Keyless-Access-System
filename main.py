@@ -7,6 +7,7 @@ from ble.central import scan_for_devices
 from ble.gatt_client import perform_challenge_response
 from rcu_io.DIO6 import dio6_set
 from bleak import BleakScanner
+from config import CLOUD_URL
 
 from cloud.api_client import get_assigned_smartphone  
 from cloud.token_client import fetch_token_by_numeric_id, CloudError        
@@ -59,7 +60,7 @@ def init_shared_key_from_cloud() -> str:
     3) Setzt den Shared Key für die Challenge/Response
     Rückgabe: deviceId (für BLE-Filter/Logging)
     """
-    info = get_assigned_smartphone(rcu_id="A116G61", base_url="http://10.191.160.181:8080")
+    info = get_assigned_smartphone(rcu_id="A116G61", base_url = CLOUD_URL)
     if not info:
         raise RuntimeError("Kein zugewiesenes Smartphone erhalten.")
 

@@ -4,8 +4,8 @@
 
 import os
 import requests
+from config import CLOUD_URL
 
-BASE_URL = os.getenv("CLOUD_BASE_URL", "http://10.191.160.181:8080/api")
 
 class CloudError(RuntimeError):
     pass
@@ -17,7 +17,7 @@ def fetch_token_by_numeric_id(device_numeric_id: int, timeout_s: float = 4.0) ->
     Erwartet entweder {"token":"<hex>"} oder {"auth_token":"<hex>"} oder Plain-Text "<hex>".
     Rückgabe: Hex-String (lower), ohne 0x.
     """
-    url = f"{BASE_URL}/devices/token/{device_numeric_id}"
+    url = f"{CLOUD_URL}/api/devices/token/{device_numeric_id}"
     try:
         r = requests.get(url, headers={"Accept": "application/json"}, timeout=timeout_s)
         r.raise_for_status()
