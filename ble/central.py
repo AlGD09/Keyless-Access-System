@@ -19,56 +19,6 @@ TARGET_DEVICE_BYTES = None
 TARGET_MANUFACTURER_ID = 0xFFFF
 
 
-async def scan_for_devices(timeout: int = 10):
-    """
-    Scannt BLE-Geräte und gibt passende Geräte inkl. Manufacturer Data zurück.
-    Ein Gerät ist 'passend', wenn:
-      - Company ID == 0xFFFF und
-      - TARGET_DEVICE_BYTES im Payload enthalten ist.
-    HINWEIS: Wenn keine TARGET_DEVICE_BYTES vorliegen, wird NICHT gematcht.
-    """
-    print(f"Scanning for BLE devices for {timeout} s ...")
-    devices = await BleakScanner.discover(timeout=timeout)
-    found = []
-
-    for d in devices:
-        name = d.name or "N/A"
-        # Hinweis: metadata ist in neueren Bleak-Versionen deprecated – für jetzt ausreichend.
-        mdata = d.metadata.get("manufacturer_data", {})
-        if not mdata:
-            continue
-
-        for comp_id, payload in mdata.items():
-            try:
-                payload_hex = payload.hex()
-            except Exception:
-                payload_hex = str(payload)
-
-            print(f"📡 {name} ({d.address}) → CompanyID: 0x{comp_id:04X}, Data: {payload_hex}")
-
-            # 1) nur 0xFFFF
-            if comp_id != TARGET_MANUFACTURER_ID:
-                continue
-
-            # 2) striktes Payload-Matching: ohne Cloud-ID verbinden wir NICHT
-            if TARGET_DEVICE_BYTES is None:
-                print("↪︎ 0xFFFF gesehen, aber keine Device-ID gesetzt → überspringe.")
-                continue
-
-            if TARGET_DEVICE_BYTES not in payload:
-                print("↪︎ 0xFFFF passt, aber Device-ID nicht im Payload → überspringe.")
-                continue
-
-            print(f"✅ Matching device gefunden: {name} ({d.address})")
-            found.append({
-                "device": d,
-                "company_id": comp_id,
-                "payload": payload
-            })
-
-    return found
-
-
 async def find_target_device_keep_scanning(timeout: int = 10):
     """
     Startet einen Scan und liefert (device, scanner) zurück, sobald das Zielgerät
