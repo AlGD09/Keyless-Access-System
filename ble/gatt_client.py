@@ -122,6 +122,3 @@ async def perform_challenge_response(device):
         print(f"Fehler bei Challenge-Response: {e}")
         return False
     
-    finally:
-        if client.is_connected:
-            await client.disconnect()
