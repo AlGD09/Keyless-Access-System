@@ -109,5 +109,7 @@ async def perform_challenge_response(device):
 
     except Exception as e:
         print(f"Fehler bei Challenge-Response: {e}")
+        if "org.bluez.GattService1" in str(e):
+            raise SystemExit("org.bluez.GattService1")
         return False
     
