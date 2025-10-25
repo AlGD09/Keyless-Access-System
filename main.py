@@ -3,8 +3,8 @@
 
 import asyncio
 import importlib
-from ble import central
-from ble.gatt_client import perform_challenge_response
+
+
 from rcu_io.DIO6 import dio6_set
 from bleak import BleakScanner
 from config import CLOUD_URL
@@ -91,7 +91,7 @@ async def main():
             await asyncio.sleep(RETRY_DELAY)
             continue
 
-        importlib.reload(central)
+        from ble import central
         central.TARGET_DEVICE_BYTES = bytes.fromhex(device_id_cloud)
         print(f"Updated TARGET_DEVICE_BYTES: {central.TARGET_DEVICE_BYTES.hex()}")
 
@@ -106,6 +106,8 @@ async def main():
             continue
 
         print(f"Verwende Gerät: {selected_device.name or 'N/A'} ({selected_device.address})")
+
+        from ble.gatt_client import perform_challenge_response
 
         try:
             success = await perform_challenge_response(selected_device)  # Scanner läuft noch!
