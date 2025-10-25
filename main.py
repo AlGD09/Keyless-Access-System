@@ -101,9 +101,11 @@ async def main():
         await asyncio.sleep(0)
         tasks = asyncio.all_tasks()
         for t in tasks:
-            name = getattr(t, "get_name", lambda: str(t))()  # kompatibel mit Python 3.7
-            coro = getattr(t.get_coro(), "__name__", str(t.get_coro()))
-            print(f"  • Task: {name}  ({coro})  done={t.done()}")
+            try:
+                name = str(t)
+                print(f"  • Task: {name}  done={t.done()}")
+            except Exception as e:
+                print(f"  • (Fehler beim Anzeigen eines Tasks: {e})")
             if t is not asyncio.current_task() and not t.done():
                 t.cancel()
         await asyncio.sleep(0.1)
