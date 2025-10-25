@@ -50,7 +50,7 @@ async def perform_challenge_response(device):
                     characteristics = list(services.values())
 
             # Debug-Ausgabe zur Sicherheit
-            print("🔎 Gefundene Characteristics:")
+            print("Gefundene Characteristics:")
             for c in characteristics:
                 try:
                     print(f"  • UUID: {c.uuid}, Handle: {getattr(c, 'handle', '?')}")
