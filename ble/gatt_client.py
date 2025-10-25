@@ -24,7 +24,7 @@ async def perform_challenge_response(device):
         await asyncio.sleep(0.2)
 
         async with BleakClient(dev, timeout=15.0, adapter="hci0") as client:
-            if not await client.is_connected:
+            if not client.is_connected:
                 print("❌ Verbindung fehlgeschlagen.")
                 return False
 
