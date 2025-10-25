@@ -92,6 +92,8 @@ async def main():
             continue
 
         from ble import central
+        await asyncio.sleep(1.0)
+        
         central.TARGET_DEVICE_BYTES = bytes.fromhex(device_id_cloud)
         print(f"Updated TARGET_DEVICE_BYTES: {central.TARGET_DEVICE_BYTES.hex()}")
 
