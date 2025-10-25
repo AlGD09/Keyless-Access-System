@@ -97,20 +97,6 @@ async def main():
 
         print("⚠⚠")
 
-        print("Prüfe laufende asyncio-Tasks vor neuem Scan ...")
-        await asyncio.sleep(0)
-        tasks = asyncio.all_tasks()
-        for t in tasks:
-            try:
-                name = str(t)
-                print(f"  • Task: {name}  done={t.done()}")
-            except Exception as e:
-                print(f"  • (Fehler beim Anzeigen eines Tasks: {e})")
-            if t is not asyncio.current_task() and not t.done():
-                t.cancel()
-        await asyncio.sleep(0.1)
-        print("Alle alten Tasks wurden abgebrochen.\n")
-
         selected_device, scanner = await central.find_target_device_keep_scanning(timeout=10)
         if not selected_device:
             print("Kein passendes Gerät gefunden. Neuer Versuch in wenigen Sekunden...")
