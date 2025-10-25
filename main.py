@@ -131,11 +131,15 @@ async def main():
 if __name__ == "__main__":
     try:
         asyncio.run(main())
-    except Exception as e:
-        # Wenn der bekannte BlueZ-Fehler auftaucht → Neustart des gesamten Programms
+    except SystemExit as e:
+        # Wenn der Exit-Code der bekannte BlueZ-Fehler ist → Neustart
         if "org.bluez.GattService1" in str(e):
-            print(" BlueZ-GattService-Fehler erkannt – starte Programm neu ...")
+            print("🔁 BlueZ-GattService-Fehler erkannt – starte Programm neu ...")
             os.execv(sys.executable, [sys.executable] + sys.argv)
         else:
-            # alle anderen Fehler normal ausgeben
+            # andere SystemExit-Fälle normal beenden
             raise
+    except Exception as e:
+        # andere Ausnahmen nur anzeigen
+        print(f"❌ Unerwarteter Fehler: {e}")
+        raise
