@@ -23,7 +23,7 @@ async def perform_challenge_response(device):
         # kurzer Moment, damit BlueZ Properties setzt
         await asyncio.sleep(0.2)
 
-        async with BleakClient(dev.address, timeout=15.0, adapter="hci0") as client:
+        async with BleakClient(dev, timeout=15.0, adapter="hci0") as client:
             if not client.is_connected:
                 print("❌ Verbindung fehlgeschlagen.")
                 return False
