@@ -35,16 +35,20 @@ async def perform_challenge_response(device):
             print("✅ Verbunden – Suche nach Service und Characteristics ...")
 
             # Kompatibler Zugriff auf Services (je nach Bleak-Version)
-            try:
-                services = await client.get_services()
-            except Exception:
-                await asyncio.sleep(0.5)
+            services = None
+            for attempt in range(5):
                 try:
-                    # Bei neueren Versionen ist services bereits eine Property
-                    services = client.services
-                except Exception as e2:
-                    print(f"❌ Services konnten nicht gelesen werden ({e2}).")
-                    return False
+                    services = await client.get_services()
+                    if services:
+                        break
+                except Exception as e:
+                    print(f"⚠ Versuch {attempt+1}/5: get_services() fehlgeschlagen ({e})")
+                    await asyncio.sleep(1.0)  # etwas warten, bis BlueZ bereit ist
+                    continue
+
+            if not services:
+                print("❌ Services konnten nicht gelesen werden – BlueZ evtl. noch nicht bereit.")
+                return False
 
             # Unterschiedliche Darstellungsformen abfangen
             characteristics = []
