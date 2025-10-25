@@ -15,9 +15,13 @@ async def perform_challenge_response(device):
     Erwartet, dass der aufrufende Code den Scanner bereits gestartet hat
     und erst nach dem Connect stoppt.
     """
+    await asyncio.sleep(0)  # Event loop flush
     print(f"Starte Challenge-Response mit {device.name or 'N/A'} ({device.address})...")
 
     dev = device  # kein zweiter Scan!
+    if not device:
+        print("Kein Gerät übergeben – Challenge-Response übersprungen.")
+        return False
 
     try:
         # kurzer Moment, damit BlueZ Properties setzt
@@ -34,8 +38,13 @@ async def perform_challenge_response(device):
             try:
                 services = await client.get_services()
             except Exception:
-                # Bei neueren Versionen ist services bereits eine Property
-                services = client.services
+                await asyncio.sleep(0.5)
+                try:
+                    # Bei neueren Versionen ist services bereits eine Property
+                    services = client.services
+                except Exception as e2:
+                    print(f"❌ Services konnten nicht gelesen werden ({e2}).")
+                    return False
 
             # Unterschiedliche Darstellungsformen abfangen
             characteristics = []
@@ -112,3 +121,7 @@ async def perform_challenge_response(device):
     except Exception as e:
         print(f"Fehler bei Challenge-Response: {e}")
         return False
+    
+    finally:
+        if client.is_connected:
+            await client.disconnect()
