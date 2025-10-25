@@ -35,70 +35,56 @@ async def perform_challenge_response(device):
             print("✅ Verbunden – Suche nach Service und Characteristics ...")
 
             # Kompatibler Zugriff auf Services (je nach Bleak-Version)
-            services = None
-            for attempt in range(5):
-                try:
-                    services = await client.get_services()
-                    if services:
-                        break
-                except Exception as e:
-                    print(f"⚠ Versuch {attempt+1}/5: get_services() fehlgeschlagen ({e})")
-                    await asyncio.sleep(1.0)  # etwas warten, bis BlueZ bereit ist
-                    continue
-
-            if not services:
-                print("❌ Services konnten nicht gelesen werden – BlueZ evtl. noch nicht bereit.")
-                return False
-
-            # Unterschiedliche Darstellungsformen abfangen
-            characteristics = []
             try:
-                # Neuere Bleak-Versionen
+                services = await client.get_services()
+            except Exception:
+                await asyncio.sleep(0.5)
+                try:
+                    # Bei neueren Versionen ist services bereits eine Property
+                    services = client.services
+                except Exception as e2:
+                    print(f"❌ Services konnten nicht gelesen werden ({e2}).")
+                    return False
+
+            # Characteristics per UUID holen (nicht über Handles arbeiten!)
+            # Falls Bleak get_characteristic() hat:
+            get_char = getattr(services, "get_characteristic", None)
+            if callable(get_char):
+                char_challenge = get_char(CHAR_CHALLENGE)
+                char_response  = get_char(CHAR_RESPONSE)
+                if not char_challenge or not char_response:
+                    print("❌ Gesuchte Characteristics nicht gefunden.")
+                    return False
+            else:
+                # Fallback: manuell filtern
+                all_chars = []
                 for s in services:
                     if hasattr(s, "characteristics"):
-                        characteristics.extend(s.characteristics)
-            except TypeError:
-                # Ältere Bleak-Version (dict)
-                if isinstance(services, dict):
-                    characteristics = list(services.values())
+                        all_chars.extend(s.characteristics)
+                def find(uuid):
+                    for c in all_chars:
+                        if getattr(c, "uuid", "").lower() == uuid.lower():
+                            return c
+                    return None
+                char_challenge = find(CHAR_CHALLENGE)
+                char_response  = find(CHAR_RESPONSE)
+                if not char_challenge or not char_response:
+                    print("❌ Gesuchte Characteristics nicht gefunden.")
+                    return False
 
-            # Debug-Ausgabe zur Sicherheit
-            print("Gefundene Characteristics:")
-            for c in characteristics:
-                try:
-                    print(f"  • UUID: {c.uuid}, Handle: {getattr(c, 'handle', '?')}")
-                except Exception:
-                    pass
-
-            # Filtern nach Ziel-UUIDs
-            chars_challenge = [c for c in characteristics if getattr(c, "uuid", "").lower() == CHAR_CHALLENGE.lower()]
-            chars_response  = [c for c in characteristics if getattr(c, "uuid", "").lower() == CHAR_RESPONSE.lower()]
-
-            if not chars_challenge or not chars_response:
-                print("❌ Gesuchte Characteristics nicht gefunden.")
-                return False
-
-            # Nimm den ersten Treffer
-            char_challenge = chars_challenge[0]
-            char_response  = chars_response[0]
-
-            print(f"Verwende Challenge-Char (Handle {getattr(char_challenge, 'handle', '?')})")
-            print(f"Verwende Response-Char (Handle {getattr(char_response, 'handle', '?')})")
-
-            # 🔹 Challenge-Response-Ablauf
+            # 🔹 Challenge-Response-Ablauf (nur UUIDs an Bleak übergeben!)
+            import os
             challenge = os.urandom(16)
             print(f"Challenge erzeugt: {challenge.hex()}")
 
-            await client.write_gatt_char(getattr(char_challenge, "handle", CHAR_CHALLENGE), challenge)
+            # 👉 WICHTIG: nicht mit Handles schreiben/lesen, sondern mit UUID
+            await client.write_gatt_char(CHAR_CHALLENGE, challenge)
             print("Challenge an Smartphone gesendet.")
-            await asyncio.sleep(5.0)
+            await asyncio.sleep(0.2)  # kurze Luft für Phone-App
 
-            try: 
-                response = await client.read_gatt_char(getattr(char_response, "handle", CHAR_RESPONSE))
-            except Exception as e: 
-                print(f"Fehler beim Lesen der Response: {e}")
-                return False
+            response = await client.read_gatt_char(CHAR_RESPONSE)
 
+            # (Rest wie gehabt: Ausgabe + verify_response(...))
             hex_value = response.hex()
             try:
                 text_value = response.decode("utf-8")
