@@ -1,2 +1,2 @@
 # config.py
-CLOUD_URL = "http://10.97.248.181:8080"
+CLOUD_URL = "http://10.248.219.181:8080"
