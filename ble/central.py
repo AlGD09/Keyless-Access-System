@@ -46,7 +46,7 @@ async def find_target_device_keep_scanning(timeout: int = 10):
                                 payload_hex = payload.hex()
                             except Exception:
                                 payload_hex = str(payload)
-                            print(f"📡 {name} ({d.address}) → CompanyID: 0x{comp_id:04X}, Data: {payload_hex}")
+                            print(f"{name} ({d.address}) → CompanyID: 0x{comp_id:04X}, Data: {payload_hex}")
                     printed.add(d.address)
 
                 # Matching
@@ -59,7 +59,7 @@ async def find_target_device_keep_scanning(timeout: int = 10):
                     if TARGET_DEVICE_BYTES is None:
                         continue
                     if TARGET_DEVICE_BYTES in payload:
-                        print(f"✅ Matching device gefunden: {d.name or 'N/A'} ({d.address})")
+                        print(f"Matching device gefunden: {d.name or 'N/A'} ({d.address})")
                         selected = d
                         break
                 if selected:

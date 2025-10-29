@@ -141,5 +141,5 @@ if __name__ == "__main__":
             raise
     except Exception as e:
         # andere Ausnahmen nur anzeigen
-        print(f"❌ Unerwarteter Fehler: {e}")
+        print(f"Unerwarteter Fehler: {e}")
         raise

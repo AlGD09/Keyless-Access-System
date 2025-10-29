@@ -29,10 +29,10 @@ async def perform_challenge_response(device):
 
         async with BleakClient(dev, timeout=15.0, adapter="hci0") as client:
             if not client.is_connected:
-                print("❌ Verbindung fehlgeschlagen.")
+                print("Verbindung fehlgeschlagen.")
                 return False
 
-            print("✅ Verbunden – Suche nach Service und Characteristics ...")
+            print("Verbunden – Suche nach Service und Characteristics ...")
 
             # Kompatibler Zugriff auf Services (je nach Bleak-Version)
             try:
@@ -43,7 +43,7 @@ async def perform_challenge_response(device):
                     # Bei neueren Versionen ist services bereits eine Property
                     services = client.services
                 except Exception as e2:
-                    print(f"❌ Services konnten nicht gelesen werden ({e2}).")
+                    print(f"Services konnten nicht gelesen werden ({e2}).")
                     return False
 
             # Characteristics per UUID holen (nicht über Handles arbeiten!)
@@ -53,7 +53,7 @@ async def perform_challenge_response(device):
                 char_challenge = get_char(CHAR_CHALLENGE)
                 char_response  = get_char(CHAR_RESPONSE)
                 if not char_challenge or not char_response:
-                    print("❌ Gesuchte Characteristics nicht gefunden.")
+                    print("Gesuchte Characteristics nicht gefunden.")
                     return False
             else:
                 # Fallback: manuell filtern
@@ -69,7 +69,7 @@ async def perform_challenge_response(device):
                 char_challenge = find(CHAR_CHALLENGE)
                 char_response  = find(CHAR_RESPONSE)
                 if not char_challenge or not char_response:
-                    print("❌ Gesuchte Characteristics nicht gefunden.")
+                    print("Gesuchte Characteristics nicht gefunden.")
                     return False
 
             # Challenge-Response-Ablauf (nur UUIDs an Bleak übergeben!)
@@ -95,13 +95,13 @@ async def perform_challenge_response(device):
 
             try:
                 if verify_response(challenge, response):
-                    print("✅ Tokenprüfung erfolgreich – Authentifizierung bestanden.")
+                    print("Tokenprüfung erfolgreich – Authentifizierung bestanden.")
                     return True
                 elif response.endswith(EXPECTED_TOKEN):
-                    print("✅ Fallback-Token erkannt – Authentifizierung bestanden.")
+                    print("Fallback-Token erkannt – Authentifizierung bestanden.")
                     return True
                 else:
-                    print("❌ Tokenprüfung fehlgeschlagen.")
+                    print("Tokenprüfung fehlgeschlagen.")
                     return False
             except Exception as e:
                 print(f"Fehler bei der Authentifizierungsprüfung: {e}")
