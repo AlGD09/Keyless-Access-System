@@ -9,6 +9,7 @@ und liefert die Treffer an main.py zurück (main steuert Connect/Challenge).
 import asyncio
 import contextlib
 from bleak import BleakScanner, BleakClient
+from typing import List
 
 # ---------------------------------------------------------
 # Zielparameter aus Cloud laden (Device-ID des Smartphones)
@@ -20,7 +21,7 @@ TARGET_MANUFACTURER_ID = 0xFFFF
 
 
 
-async def find_best_authorized_device(devices_authorized: list[bytes], timeout: int = 10):
+async def find_best_authorized_device(devices_authorized: List[bytes], timeout: int = 10):
     """
     Scannt BLE-Geräte über 'timeout' Sekunden und wählt das autorisierte Gerät
     mit dem höchsten RSSI aus.
