@@ -26,6 +26,8 @@ async def monitor_rssi(address: str):
     """Überwacht die Signalstärke und steuert DIO6 entsprechend."""
     print(f"Starte RSSI-Überwachung für {address} (Schwelle: {RSSI_THRESHOLD} dBm)")
 
+    not_found_count = 0  # Zähler für aufeinanderfolgende Nicht-Funde
+
     while True:
         try:
             # Kurzen Scan durchführen, um aktuellen RSSI des bekannten Geräts zu ermitteln
@@ -44,9 +46,15 @@ async def monitor_rssi(address: str):
                     dio6_set(0)  # grün → Freigabe
                 else:
                     dio6_set(1)  # rot → zu weit entfernt
+                not_found_count = 0  # Zähler zurücksetzen
             else:
                 print("Gerät im Scan nicht gefunden – vermutlich außer Reichweite.")
                 dio6_set(1)  # Sicherheit: rot
+                not_found_count += 1
+
+                if not_found_count >= 5:
+                    print("Gerät 5x in Folge nicht gefunden – starte Programm neu.")
+                    os.execv(sys.executable, [sys.executable] + sys.argv)
 
             await asyncio.sleep(RSSI_INTERVAL)
 
@@ -183,7 +191,7 @@ if __name__ == "__main__":
     except SystemExit as e:
         # Wenn der Exit-Code der bekannte BlueZ-Fehler ist → Neustart
         if "org.bluez.GattService1" in str(e):
-            print("🔁 BlueZ-GattService-Fehler erkannt – starte Programm neu ...")
+            print("BlueZ-GattService-Fehler erkannt – starte Programm neu ...")
             os.execv(sys.executable, [sys.executable] + sys.argv)
         else:
             # andere SystemExit-Fälle normal beenden
