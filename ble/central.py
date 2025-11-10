@@ -37,6 +37,13 @@ async def find_best_authorized_device(devices_authorized: List[bytes], timeout: 
 
     try:
         end_time = asyncio.get_event_loop().time() + timeout
+
+        # Wenn nur ein autorisiertes Gerät übergeben wurde
+        single_mode = len(devices_authorized) == 1
+        if single_mode:
+            print("[BLE] Nur ein autorisiertes Gerät vorhanden → Auswahl erfolgt beim ersten Treffer ohne RSSI-Vergleich.")
+
+
         while asyncio.get_event_loop().time() < end_time:
             await asyncio.sleep(0.4)
 
@@ -62,8 +69,14 @@ async def find_best_authorized_device(devices_authorized: List[bytes], timeout: 
                         continue
                     for target_bytes in devices_authorized:
                         if target_bytes in payload:
-                            authorized_hits.append((d, d.rssi, target_bytes))
-                            print(f"[BLE] Autorisiertes Gerät erkannt: {d.name or 'N/A'} ({d.address}) RSSI={d.rssi}")
+                            if single_mode:
+                                matched_hex = target_bytes.hex()
+                                print(f"[BLE] → Autorisiertes Gerät erkannt: {d.name or 'N/A'} "
+                                      f"({d.address}) deviceId={matched_hex} (Single-Mode)")
+                                return d, matched_hex, scanner  # Direkt zurückgeben
+                            else:
+                                authorized_hits.append((d, d.rssi, target_bytes))
+                                print(f"[BLE] Autorisiertes Gerät erkannt: {d.name or 'N/A'} ({d.address}) RSSI={d.rssi}")
                             break
 
         if not authorized_hits:
