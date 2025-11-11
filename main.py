@@ -10,6 +10,7 @@ from ble.gatt_client import perform_challenge_response
 from rcu_io.DIO6 import dio6_set
 from bleak import BleakScanner
 from config import CLOUD_URL
+from config import RCU_ID
 
 from cloud.api_client import get_assigned_smartphones  
 from cloud.token_client import fetch_token_by_numeric_id, CloudError        
@@ -66,7 +67,7 @@ async def monitor_rssi(address: str):
 """
 def init_shared_key_from_cloud() -> str:
     
-    info = get_assigned_smartphone(rcu_id="A116G61", base_url = CLOUD_URL)
+    info = get_assigned_smartphone(rcu_id=RCU_ID, base_url = CLOUD_URL)
     if not info:
         raise RuntimeError("Kein zugewiesenes Smartphone erhalten.")
 
@@ -83,7 +84,7 @@ def init_shared_key_from_cloud() -> str:
     return device_id
 """
 
-def init_devices_from_cloud(rcu_id="A116G61"):
+def init_devices_from_cloud(rcu_id=RCU_ID):
     """
     Lädt alle zugewiesenen Smartphones dieser RCU und deren Tokens.
     Rückgabe: Liste autorisierter Geräte mit Feldern:

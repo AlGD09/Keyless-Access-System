@@ -2,9 +2,9 @@
 import requests
 from urllib.parse import quote
 from config import CLOUD_URL
+from config import RCU_ID
 
-
-def get_assigned_smartphones(rcu_id="A116G61", base_url=CLOUD_URL, timeout_s=10):
+def get_assigned_smartphones(rcu_id=RCU_ID, base_url=CLOUD_URL, timeout_s=10):
     """
     Fragt die Cloud nach allen zugewiesenen Smartphones einer RCU.
     """
@@ -44,7 +44,7 @@ def get_assigned_smartphones(rcu_id="A116G61", base_url=CLOUD_URL, timeout_s=10)
 
     
 """
-def get_target_manufacturer_id(rcu_id="A116G61", base_url = CLOUD_URL, timeout_s=10):
+def get_target_manufacturer_id(rcu_id=RCU_ID, base_url = CLOUD_URL, timeout_s=10):
     
     Bestehende API für deviceId (bleibt erhalten).
     Nutzt intern get_assigned_smartphone.
@@ -54,7 +54,7 @@ def get_target_manufacturer_id(rcu_id="A116G61", base_url = CLOUD_URL, timeout_s
     """
 
 """
-def get_assigned_smartphone(rcu_id="A116G61", base_url = CLOUD_URL, timeout_s=10):
+def get_assigned_smartphone(rcu_id=RCU_ID, base_url = CLOUD_URL, timeout_s=10):
     
     rcu_id = str(rcu_id).strip()
     url = f"{base_url}/api/rcu/{quote(rcu_id)}/smartphones"
