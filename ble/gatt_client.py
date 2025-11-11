@@ -3,6 +3,7 @@ import asyncio
 import os
 from bleak import BleakClient, BleakScanner
 from auth.challenge import verify_response
+from config import RCU_ID
 
 SERVICE_UUID   = "0000aaa0-0000-1000-8000-aabbccddeeff"
 CHAR_CHALLENGE = "0000aaa2-0000-1000-8000-aabbccddeeff"
@@ -77,9 +78,15 @@ async def perform_challenge_response(device):
             challenge = os.urandom(16)
             print(f"Challenge erzeugt: {challenge.hex()}")
 
+            
+            # RCU-ID (z. B. "A116G61") als Bytes anhängen
+            rcu_id_bytes = RCU_ID.encode("utf-8")
+            payload = challenge + rcu_id_bytes
+            print(f"Challenge-Payload gesendet (Challenge + ID): {payload.hex()}")
+
             # WICHTIG: nicht mit Handles schreiben/lesen, sondern mit UUID
-            await client.write_gatt_char(CHAR_CHALLENGE, challenge)
-            print("Challenge an Smartphone gesendet.")
+            await client.write_gatt_char(CHAR_CHALLENGE, payload)
+            print("Challenge + RCU-ID an Smartphone gesendet.")
             await asyncio.sleep(0.2)  # kurze Luft für Phone-App
 
             response = await client.read_gatt_char(CHAR_RESPONSE)
