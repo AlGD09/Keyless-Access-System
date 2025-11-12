@@ -87,9 +87,56 @@ async def perform_challenge_response(device):
             # WICHTIG: nicht mit Handles schreiben/lesen, sondern mit UUID
             await client.write_gatt_char(CHAR_CHALLENGE, payload)
             print("Challenge + RCU-ID an Smartphone gesendet.")
-            await asyncio.sleep(0.2)  # kurze Luft für Phone-App
+        
 
-            response = await client.read_gatt_char(CHAR_RESPONSE)
+            # Vorbereitung für Notification
+            response_event = asyncio.Event()
+            response_data = bytearray()
+
+            def handle_response(sender: str, data: bytearray):
+                response_data[:] = data
+                print(f"Notification empfangen: {data.hex()}")
+                response_event.set()
+
+            # Notifications aktivieren
+            try:
+                await client.start_notify(CHAR_RESPONSE, handle_response)
+                print("Notification-Handler aktiviert.")
+            except Exception as e:
+                print(f"Warnung: Notification-Start fehlgeschlagen ({e}) – fahre fort.")
+
+
+            # 1. Versuch: direkt lesen (Single-Machine-Fall)
+            await asyncio.sleep(0.2)
+            response = None
+            try:
+                response = await client.read_gatt_char(CHAR_RESPONSE)
+                if response and len(response) > 0:
+                    print("Response direkt über read_gatt_char empfangen.")
+            except Exception as e:
+                print(f"Kein direkter Read möglich ({e}), warte auf Notification...")
+
+            # 2️. Wenn keine direkte Antwort kam -> auf Notification warten
+            if not response or len(response) == 0:
+                try:
+                    await asyncio.wait_for(response_event.wait(), timeout=5.0)
+                    response = bytes(response_data)
+                    print("Response über Notification empfangen.")
+                except asyncio.TimeoutError:
+                    print("Keine Response empfangen (weder read noch notify).")
+                    try:
+                        await client.stop_notify(CHAR_RESPONSE)
+                    except Exception:
+                        pass
+                    return False
+                
+            # Notification beenden
+            try:
+                await client.stop_notify(CHAR_RESPONSE)
+            except Exception:
+                pass
+
+            # response = await client.read_gatt_char(CHAR_RESPONSE)
 
             hex_value = response.hex()
             try:
