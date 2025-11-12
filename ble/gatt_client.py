@@ -114,12 +114,12 @@ async def perform_challenge_response(device):
                 if response and len(response) > 0:
                     print("Response direkt über read_gatt_char empfangen.")
             except Exception as e:
-                print(f"Kein direkter Read möglich ({e}), warte auf Notification...")
+                print(f"Kein direkter Read möglich, warte auf Notification...")
 
             # 2️. Wenn keine direkte Antwort kam -> auf Notification warten
             if not response or len(response) == 0:
                 try:
-                    await asyncio.wait_for(response_event.wait(), timeout=5.0)
+                    await asyncio.wait_for(response_event.wait(), timeout=6.5)
                     response = bytes(response_data)
                     print("Response über Notification empfangen.")
                 except asyncio.TimeoutError:
