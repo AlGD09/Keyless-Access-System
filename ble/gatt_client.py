@@ -84,11 +84,6 @@ async def perform_challenge_response(device):
             payload = challenge + rcu_id_bytes
             print(f"Challenge-Payload gesendet (Challenge + ID): {payload.hex()}")
 
-            # WICHTIG: nicht mit Handles schreiben/lesen, sondern mit UUID
-            await client.write_gatt_char(CHAR_CHALLENGE, payload)
-            print("Challenge + RCU-ID an Smartphone gesendet.")
-        
-
             # Vorbereitung für Notification
             response_event = asyncio.Event()
             response_data = bytearray()
@@ -105,6 +100,11 @@ async def perform_challenge_response(device):
             except Exception as e:
                 print(f"Warnung: Notification-Start fehlgeschlagen ({e}) – fahre fort.")
 
+            await asyncio.sleep(0.1)
+
+            # WICHTIG: nicht mit Handles schreiben/lesen, sondern mit UUID
+            await client.write_gatt_char(CHAR_CHALLENGE, payload)
+            print("Challenge + RCU-ID an Smartphone gesendet.")
 
             # 1. Versuch: direkt lesen (Single-Machine-Fall)
             await asyncio.sleep(0.2)
