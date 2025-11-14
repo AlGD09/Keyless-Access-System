@@ -33,6 +33,9 @@ async def monitor_rssi(address: str, selected_device_name):
 
     not_found_count = 0  # Zähler für aufeinanderfolgende Nicht-Funde
 
+    if (ENTSPERRT):
+            notify_rcu_event(RCU_ID, selected_device_name, 'Entsperrt')
+
     while True:
         try:
             # Kurzen Scan durchführen, um aktuellen RSSI des bekannten Geräts zu ermitteln
@@ -67,10 +70,8 @@ async def monitor_rssi(address: str, selected_device_name):
         except Exception as e:
             print(f"Fehler beim RSSI-Check: {e}")
             dio6_set(1)
-            break###
+            break
 
-    if (ENTSPERRT):
-            notify_rcu_event(RCU_ID, selected_device_name, 'Entsperrt')
 
 """
 def init_shared_key_from_cloud() -> str:
