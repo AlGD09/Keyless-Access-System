@@ -27,7 +27,7 @@ RETRY_DELAY = 10
 
 ENTSPERRT = False
 
-async def monitor_rssi(address: str, selected_device_name):
+async def monitor_rssi(address: str, selected_device_name, matched_device_id):
     """Überwacht die Signalstärke und steuert DIO6 entsprechend."""
     print(f"Starte RSSI-Überwachung für {address} (Schwelle: {RSSI_THRESHOLD} dBm)")
 
@@ -53,7 +53,7 @@ async def monitor_rssi(address: str, selected_device_name):
                     dio6_set(0)  # grün -> Freigabe
 
                     if not ENTSPERRT:       #  ← nur beim ersten Mal
-                        notify_rcu_event(RCU_ID, selected_device_name, 'Entsperrt')
+                        notify_rcu_event(RCU_ID, selected_device_name, matched_device_id, 'Entsperrt')
                         ENTSPERRT = True     # Merker setzen
 
                 else:
@@ -190,13 +190,13 @@ async def main():
         if success:
             print("Authentifizierung erfolgreich – Freigabe aktiv.")
             # dio6_set(0) sofort grün
-            notify_rcu_event(RCU_ID, selected_device.name, 'Authentifiziert')
-            await monitor_rssi(selected_device.address, selected_device.name)
+            notify_rcu_event(RCU_ID, selected_device.name, matched_device_id, 'Authentifiziert')
+            await monitor_rssi(selected_device.address, selected_device.name, matched_device_id)
         else:
             print("Authentifizierung fehlgeschlagen – Zugang verweigert.")
             dio6_set(1)  # rot
             if gatt_client.RESPONSE_STATUS: # Falls doch ein Response erhalten wurde -> Fehler notify
-                notify_rcu_event(RCU_ID, selected_device.name, 'Fehler')
+                notify_rcu_event(RCU_ID, selected_device.name, matched_device_id, 'Fehler')
 
             await asyncio.sleep(RETRY_DELAY)
             continue

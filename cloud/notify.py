@@ -6,7 +6,7 @@ from config import CLOUD_URL
 from config import RCU_ID
 
 
-def notify_rcu_event(rcu_id=RCU_ID, deviceName: str = 'none', result: str = 'none', base_url=CLOUD_URL, timeout_s=10):
+def notify_rcu_event(rcu_id=RCU_ID, deviceName: str = 'none', deviceId: str = 'None', result: str = 'none', base_url=CLOUD_URL, timeout_s=10):
 
     rcu_id = str(rcu_id).strip()
     url = f"{base_url}/api/rcu/events/add"
@@ -15,6 +15,7 @@ def notify_rcu_event(rcu_id=RCU_ID, deviceName: str = 'none', result: str = 'non
     payload = {
         "rcuId": RCU_ID,
         "deviceName": deviceName, 
+        "deviceId": deviceId,
         "result": result
     }
 
