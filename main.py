@@ -31,10 +31,12 @@ async def monitor_rssi(address: str, selected_device_name):
     """Überwacht die Signalstärke und steuert DIO6 entsprechend."""
     print(f"Starte RSSI-Überwachung für {address} (Schwelle: {RSSI_THRESHOLD} dBm)")
 
+    global ENTSPERRT
+
     not_found_count = 0  # Zähler für aufeinanderfolgende Nicht-Funde
 
     if (ENTSPERRT):
-            notify_rcu_event(RCU_ID, selected_device_name, 'Entsperrt')
+        notify_rcu_event(RCU_ID, selected_device_name, 'Entsperrt')
 
     while True:
         try:
@@ -52,7 +54,11 @@ async def monitor_rssi(address: str, selected_device_name):
 
                 if rssi_value > RSSI_THRESHOLD:
                     dio6_set(0)  # grün -> Freigabe
-                    ENTSPERRT = True
+
+                    if not ENTSPERRT:       #  ← nur beim ersten Mal
+                        notify_rcu_event(RCU_ID, selected_device_name, 'Entsperrt')
+                        ENTSPERRT = True     # Merker setzen
+
                 else:
                     dio6_set(1)  # rot -> zu weit entfernt
                 not_found_count = 0  # Zähler zurücksetzen
