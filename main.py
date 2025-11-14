@@ -6,6 +6,7 @@ import sys
 import asyncio
 import importlib
 from ble import central
+from ble import gatt_client
 from ble.gatt_client import perform_challenge_response
 from rcu_io.DIO6 import dio6_set
 from bleak import BleakScanner
@@ -13,7 +14,8 @@ from config import CLOUD_URL
 from config import RCU_ID
 
 from cloud.api_client import get_assigned_smartphones  
-from cloud.token_client import fetch_token_by_numeric_id, CloudError        
+from cloud.token_client import fetch_token_by_numeric_id, CloudError 
+from cloud.notify import notify_rcu_event       
 from auth.challenge import set_shared_key_hex
 
 
@@ -23,7 +25,7 @@ RSSI_THRESHOLD = -65  # dBm
 RSSI_INTERVAL = 3      # Sekunden zwischen RSSI-Abfragen
 RETRY_DELAY = 10
 
-async def monitor_rssi(address: str):
+async def monitor_rssi(address: str, selected_device_name):
     """Überwacht die Signalstärke und steuert DIO6 entsprechend."""
     print(f"Starte RSSI-Überwachung für {address} (Schwelle: {RSSI_THRESHOLD} dBm)")
 
@@ -44,9 +46,10 @@ async def monitor_rssi(address: str):
                 print(f"Aktueller RSSI: {rssi_value} dBm")
 
                 if rssi_value > RSSI_THRESHOLD:
-                    dio6_set(0)  # grün → Freigabe
+                    dio6_set(0)  # grün -> Freigabe
+                    notify_rcu_event(RCU_ID, selected_device_name, 'Entsperrt')
                 else:
-                    dio6_set(1)  # rot → zu weit entfernt
+                    dio6_set(1)  # rot -> zu weit entfernt
                 not_found_count = 0  # Zähler zurücksetzen
             else:
                 print("Gerät im Scan nicht gefunden – vermutlich außer Reichweite.")
@@ -153,8 +156,8 @@ async def main():
             await asyncio.sleep(RETRY_DELAY)
             continue
 
-        print(f"Verwende Gerät: {selected_device.name or 'N/A'} ({selected_device.address})")
-        print(f"[RCU] matched deviceId: {matched_device_id}")
+        print(f"Verwende Gerät: {selected_device.name or 'N/A'} ({selected_device.address})") # z.B. Xiaomi 14T Pro (5A:74:B4:51:A5:A0)
+        print(f"[RCU] matched deviceId: {matched_device_id}")  # z.B. 6f0e2d2f34a1f4f8
 
         matched_entry = next((d for d in authorized_devices if d["deviceId"] == matched_device_id), None)
         if not matched_entry:
@@ -167,7 +170,7 @@ async def main():
         print(f"[RCU] Shared Key für deviceId={matched_device_id} gesetzt.")
 
         try:
-            success = await perform_challenge_response(selected_device)  # Scanner läuft noch!
+            success = await perform_challenge_response(selected_device)  # Scanner läuft noch
         finally:
             if scanner:
                 await scanner.stop()
@@ -177,11 +180,15 @@ async def main():
 
         if success:
             print("Authentifizierung erfolgreich – Freigabe aktiv.")
-            dio6_set(0)  # sofort grün
-            await monitor_rssi(selected_device.address)
+            # dio6_set(0) sofort grün
+            notify_rcu_event(RCU_ID, selected_device.name, 'Authentifiziert')
+            await monitor_rssi(selected_device.address, selected_device.name)
         else:
             print("Authentifizierung fehlgeschlagen – Zugang verweigert.")
             dio6_set(1)  # rot
+            if gatt_client.RESPONSE_STATUS: # Falls doch ein Response erhalten wurde -> Fehler notify
+                notify_rcu_event(RCU_ID, selected_device.name, 'Fehler')
+
             await asyncio.sleep(RETRY_DELAY)
             continue
 

@@ -11,6 +11,8 @@ CHAR_RESPONSE  = "0000aaa1-0000-1000-8001-aabbccddeeff"
 
 EXPECTED_TOKEN = b"\xDE\xAD\xBE\xEF"
 
+RESPONSE_STATUS = False
+
 async def perform_challenge_response(device):
     """Challenge-Response – robust auch ohne vorheriges Pairing.
     Erwartet, dass der aufrufende Code den Scanner bereits gestartet hat
@@ -98,7 +100,7 @@ async def perform_challenge_response(device):
                 await client.start_notify(CHAR_RESPONSE, handle_response)
                 print("Notification-Handler aktiviert.")
             except Exception as e:
-                print(f"Warnung: Notification-Start fehlgeschlagen ({e}) – fahre fort.")
+                print(f"Warnung: Notification-Start fehlgeschlagen, fahre fort.")
 
             await asyncio.sleep(0.1)
 
@@ -146,6 +148,10 @@ async def perform_challenge_response(device):
 
             print(f"Response empfangen (HEX): {hex_value}")
             print(f"Response als Text: {text_value}")
+
+            if response != None:
+                RESPONSE_STATUS = True
+
 
             try:
                 if verify_response(challenge, response):
