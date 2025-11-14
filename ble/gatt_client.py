@@ -14,6 +14,10 @@ EXPECTED_TOKEN = b"\xDE\xAD\xBE\xEF"
 RESPONSE_STATUS = False
 
 async def perform_challenge_response(device):
+
+    global RESPONSE_STATUS
+    RESPONSE_STATUS = False
+
     """Challenge-Response – robust auch ohne vorheriges Pairing.
     Erwartet, dass der aufrufende Code den Scanner bereits gestartet hat
     und erst nach dem Connect stoppt.
