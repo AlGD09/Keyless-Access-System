@@ -190,7 +190,7 @@ async def main():
         if success:
             print("Authentifizierung erfolgreich – Freigabe aktiv.")
             # dio6_set(0) sofort grün
-            notify_rcu_event(RCU_ID, selected_device.name, matched_device_id, 'Authentifiziert')
+            notify_rcu_event(RCU_ID, selected_device.name, matched_device_id, 'Freigegeben')
             await monitor_rssi(selected_device.address, selected_device.name, matched_device_id)
         else:
             print("Authentifizierung fehlgeschlagen – Zugang verweigert.")
