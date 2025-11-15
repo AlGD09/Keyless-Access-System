@@ -116,22 +116,18 @@ def init_devices_from_cloud(rcu_id=RCU_ID):
     for info in smartphones:
         numeric_id = info.get("id")
         device_id = info.get("deviceId")
+        status = info.get("status")
         if not numeric_id or not device_id:
             continue
 
-        try:
-            token_hex = fetch_token_by_numeric_id(int(numeric_id))
+        if status == "active": 
             authorized.append({
                 "id": numeric_id,
                 "deviceId": device_id,
-                "token": token_hex
             })
-            print(f"[RCU] Token für deviceId={device_id} erhalten (id={numeric_id}).")
-        except CloudError as e:
-            print(f"[RCU] Kein Token für deviceId={device_id}: {e}")
 
     if not authorized:
-        raise RuntimeError("Keine gültigen Tokens für zugewiesene Smartphones gefunden.")
+        raise RuntimeError("Keine aktive Smartphones vorhanden - Scannen wird übersprungen")
 
     print(f"[RCU] {len(authorized)} autorisierte Geräte geladen.")
     return authorized
@@ -170,13 +166,17 @@ async def main():
         print(f"[RCU] matched deviceId: {matched_device_id}")  # z.B. 6f0e2d2f34a1f4f8
 
         matched_entry = next((d for d in authorized_devices if d["deviceId"] == matched_device_id), None)
-        if not matched_entry:
-            print(f"[RCU] Kein Token für deviceId={matched_device_id} gefunden – überspringe Verbindung.")
+
+        try: 
+            token_hex = fetch_token_by_numeric_id(int(matched_entry["id"]))
+            print(f"[RCU] Token für {selected_device.name} erhalten (id={matched_entry["id"]}).")
+        except CloudError as e:
+            print(f"[RCU] Kein Token für {selected_device.name} erhalten: {e} – überspringe Verbindung.")
             dio6_set(1)
             await asyncio.sleep(RETRY_DELAY)
             continue
 
-        set_shared_key_hex(matched_entry["token"])
+        set_shared_key_hex(token_hex)
         print(f"[RCU] Shared Key für deviceId={matched_device_id} gesetzt.")
 
         try:
