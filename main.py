@@ -32,6 +32,7 @@ async def monitor_rssi(address: str, selected_device_name, matched_device_id):
     print(f"Starte RSSI-Überwachung für {address} (Schwelle: {RSSI_THRESHOLD} dBm)")
 
     global ENTSPERRT
+    ENTSPERRT = False
 
     not_found_count = 0  # Zähler für aufeinanderfolgende Nicht-Funde
 
