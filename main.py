@@ -129,7 +129,7 @@ def init_devices_from_cloud(rcu_id=RCU_ID):
     if not authorized:
         raise RuntimeError("Keine aktive Smartphones vorhanden - Scannen wird übersprungen")
 
-    print(f"[RCU] {len(authorized)} autorisierte Geräte geladen.")
+    print(f"[CLOUD] {len(authorized)} autorisierte Geräte geladen.")
     return authorized
 
 
@@ -169,9 +169,9 @@ async def main():
         
         try: 
             token_hex = fetch_token_by_numeric_id(int(matched_entry["id"]))
-            print(f"[RCU] Token für {selected_device.name} erhalten (id={matched_entry['id']}).")
+            print(f"[CLOUD] Token für {selected_device.name} erhalten (id={matched_entry['id']}).")
         except CloudError as e:
-            print(f"[RCU] Kein Token für {selected_device.name} erhalten: {e} – überspringe Verbindung.")
+            print(f"[CLOUD] Kein Token für {selected_device.name} erhalten: {e} – überspringe Verbindung.")
             dio6_set(1)
             await asyncio.sleep(RETRY_DELAY)
             continue

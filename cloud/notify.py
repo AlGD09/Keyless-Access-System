@@ -12,6 +12,9 @@ def notify_rcu_event(rcu_id=RCU_ID, deviceName: str = 'none', deviceId: str = 'N
     url = f"{base_url}/api/rcu/events/add"
     headers = {"Content-Type": "application/json"}
 
+    if deviceName == "BlueZ 5.72":
+        deviceName = "Laptop-phone"
+
     payload = {
         "rcuId": RCU_ID,
         "deviceName": deviceName, 
