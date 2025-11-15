@@ -166,10 +166,10 @@ async def main():
         print(f"[RCU] matched deviceId: {matched_device_id}")  # z.B. 6f0e2d2f34a1f4f8
 
         matched_entry = next((d for d in authorized_devices if d["deviceId"] == matched_device_id), None)
-
+        
         try: 
-            token_hex = fetch_token_by_numeric_id(matched_entry["id"])
-            print(f"[RCU] Token für {selected_device.name} erhalten (id={matched_entry["id"]}).")
+            token_hex = fetch_token_by_numeric_id(int(matched_entry["id"]))
+            print(f"[RCU] Token für {selected_device.name} erhalten (id={matched_entry['id']}).")
         except CloudError as e:
             print(f"[RCU] Kein Token für {selected_device.name} erhalten: {e} – überspringe Verbindung.")
             dio6_set(1)
