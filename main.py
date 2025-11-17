@@ -22,7 +22,7 @@ from auth.challenge import set_shared_key_hex
 
 # RSSI-Schwelle für Freigabe (z. B. Gerät in Reichweite)
 RSSI_THRESHOLD = -65  # dBm
-RSSI_INTERVAL = 3      # Sekunden zwischen RSSI-Abfragen
+RSSI_INTERVAL = 2      # Sekunden zwischen RSSI-Abfragen
 RETRY_DELAY = 5       # Zeit zum Programm Neustart      
 TIMEOUT = 5    # Scanning Zeit
 
