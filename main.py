@@ -153,7 +153,7 @@ async def main():
 
     
         selected_device, matched_device_id, scanner = await central.find_best_authorized_device(
-            central.TARGET_DEVICE_BYTES_LIST, timeout=10
+            central.TARGET_DEVICE_BYTES_LIST, timeout=5
         )
         # selected_device, scanner = await central.find_target_device_keep_scanning(timeout=10)
         if not selected_device:
