@@ -27,6 +27,7 @@ RETRY_DELAY = 5       # Zeit zum Programm Neustart
 TIMEOUT = 5    # Scanning Zeit
 
 ENTSPERRT = False
+NOT_FOUND = 3  # Versuche nach Authent. zum Neustart
 
 async def monitor_rssi(address: str, selected_device_name, matched_device_id):
     """Überwacht die Signalstärke und steuert DIO6 entsprechend."""
@@ -66,7 +67,7 @@ async def monitor_rssi(address: str, selected_device_name, matched_device_id):
                 dio6_set(1)  # Sicherheit: rot
                 not_found_count += 1
 
-                if not_found_count >= 5:
+                if not_found_count >= NOT_FOUND:
                     print("Gerät 5x in Folge nicht gefunden – starte Programm neu.")
                     os.execv(sys.executable, [sys.executable] + sys.argv)
 
