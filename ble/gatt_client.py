@@ -125,7 +125,7 @@ async def perform_challenge_response(device):
             # 2️. Wenn keine direkte Antwort kam -> auf Notification warten
             if not response or len(response) == 0:
                 try:
-                    await asyncio.wait_for(response_event.wait(), timeout=6.5)
+                    await asyncio.wait_for(response_event.wait(), timeout=13.5)
                     response = bytes(response_data)
                     print("Response über Notification empfangen.")
                 except asyncio.TimeoutError:

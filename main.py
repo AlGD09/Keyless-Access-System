@@ -68,7 +68,7 @@ async def monitor_rssi(address: str, selected_device_name, matched_device_id):
                 not_found_count += 1
 
                 if not_found_count >= NOT_FOUND:
-                    print("Gerät 5x in Folge nicht gefunden – starte Programm neu.")
+                    print("Gerät 3x in Folge nicht gefunden – starte Programm neu.")
                     os.execv(sys.executable, [sys.executable] + sys.argv)
 
             await asyncio.sleep(RSSI_INTERVAL)
