@@ -23,7 +23,8 @@ from auth.challenge import set_shared_key_hex
 # RSSI-Schwelle für Freigabe (z. B. Gerät in Reichweite)
 RSSI_THRESHOLD = -65  # dBm
 RSSI_INTERVAL = 3      # Sekunden zwischen RSSI-Abfragen
-RETRY_DELAY = 10
+RETRY_DELAY = 5       # Zeit zum Programm Neustart      
+TIMEOUT = 5    # Scanning Zeit
 
 ENTSPERRT = False
 
@@ -153,7 +154,7 @@ async def main():
 
     
         selected_device, matched_device_id, scanner = await central.find_best_authorized_device(
-            central.TARGET_DEVICE_BYTES_LIST, timeout=5
+            central.TARGET_DEVICE_BYTES_LIST, timeout=TIMEOUT
         )
         # selected_device, scanner = await central.find_target_device_keep_scanning(timeout=10)
         if not selected_device:
