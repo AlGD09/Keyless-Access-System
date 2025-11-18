@@ -43,7 +43,7 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
                     if not raw_line:
                         continue
 
-                    line = raw_line.decode()   # Bytes in Strings dekodieren in data 
+                    line = raw_line   # Bytes in Strings dekodieren in data 
 
                     if line.startswith("data: "):
                         event = line[6:]  # schneidet "data: " von der Nachricht
