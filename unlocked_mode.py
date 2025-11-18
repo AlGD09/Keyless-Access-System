@@ -46,7 +46,7 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
                     line = raw_line   # Bytes in Strings dekodieren in data 
 
                     if line.startswith("data:"):
-                        event = line[6:]  # schneidet "data: " von der Nachricht
+                        event = line.split(":", 1)[1].strip()  # schneidet "data: " von der Nachricht
                         print(f"[UNLOCKED][SSE] Event: {event}")
 
                         if event == "LOCK":  # Falls LOCK empfangen wird, Maschine verriegeln (DIO-1) und zurücl zu Main (Scannen)
