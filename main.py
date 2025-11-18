@@ -17,6 +17,7 @@ from cloud.api_client import get_assigned_smartphones
 from cloud.token_client import fetch_token_by_numeric_id, CloudError 
 from cloud.notify import notify_rcu_event       
 from auth.challenge import set_shared_key_hex
+from unlocked_mode import start_unlocked_mode
 
 
 
@@ -55,9 +56,12 @@ async def monitor_rssi(address: str, selected_device_name, matched_device_id):
                 if rssi_value > RSSI_THRESHOLD:
                     dio6_set(0)  # grün -> Freigabe
 
-                    if not ENTSPERRT:       #  ← nur beim ersten Mal
+                    if not ENTSPERRT:
                         notify_rcu_event(RCU_ID, selected_device_name, matched_device_id, 'Entsperrt')
-                        ENTSPERRT = True     # Merker setzen
+                        ENTSPERRT = True
+                        print("[RSSI] Entsperr-Schwelle erreicht – verlasse RSSI-Überwachung.")
+                        return   # Funktion verlassen
+
 
                 else:
                     dio6_set(1)  # rot -> zu weit entfernt
@@ -76,7 +80,7 @@ async def monitor_rssi(address: str, selected_device_name, matched_device_id):
         except Exception as e:
             print(f"Fehler beim RSSI-Check: {e}")
             dio6_set(1)
-            break
+            return
 
 
 """
@@ -195,6 +199,9 @@ async def main():
             # dio6_set(0) sofort grün
             notify_rcu_event(RCU_ID, selected_device.name, matched_device_id, 'Freigegeben')
             await monitor_rssi(selected_device.address, selected_device.name, matched_device_id)
+            # start_unlocked_mode(selected_device.name, matched_device_id)
+            # continue 
+
         else:
             print("Authentifizierung fehlgeschlagen – Zugang verweigert.")
             dio6_set(1)  # rot
