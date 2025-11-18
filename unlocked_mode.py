@@ -26,13 +26,17 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
 
     # SSE-Endpunkt der Cloud
     sse_url = f"{CLOUD_URL}/api/rcu/sse/{RCU_ID}"
-    headers = {"Accept": "text/event-stream"}
+    headers = {
+        "Accept": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive"
+    }
 
     while True:  # Endlos-Schleide -> verbunden bleiben
         try:   # Verbindung offen bleiben Cloud "LOCK" sendet, oder Verbindung verloren
             # Persistente SSE-Verbindung zur Cloud starten
-            with requests.get(sse_url, headers=headers, stream=True, timeout=SSE_TIMEOUT) as resp:  
-                for raw_line in resp.iter_lines(): # Cloud sendet Zeilen wie: data: LOCK, data: HEARTBEAT_OK, data: STATUS
+            with requests.get(sse_url, headers=headers, stream=True, timeout=None) as resp:  
+                for raw_line in resp.iter_lines(decode_unicode=True): # Cloud sendet Zeilen wie: data: LOCK, data: HEARTBEAT_OK, data: STATUS
                     if not raw_line:
                         continue
 
