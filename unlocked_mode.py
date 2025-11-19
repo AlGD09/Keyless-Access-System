@@ -115,7 +115,6 @@ async def rssi_watchdog_coroutine(client, stop_flag):
     while not stop_flag.is_set():
         try:
 
-            await client.connect()
             if not client.is_connected:
                 print("[RSSI] Verbindung nicht möglich.")
                 await asyncio.sleep(2)
