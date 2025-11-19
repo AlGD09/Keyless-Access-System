@@ -121,8 +121,9 @@ async def rssi_watchdog_coroutine(client, stop_flag):
                 continue
 
             # RSSI lesen
-            rssi = await client.get_current_rssi()
-        
+            device = client._backend._device
+            rssi = device.rssi if device else None
+
 
             if rssi is not None:
                 print(f"[RSSI] {rssi} dBm")
