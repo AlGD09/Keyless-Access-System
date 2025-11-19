@@ -8,6 +8,7 @@ import importlib
 from ble import central
 from ble import gatt_client
 from ble.gatt_client import perform_challenge_response
+from ble.gatt_client import send_unlock_status
 from rcu_io.DIO6 import dio6_set
 from bleak import BleakScanner
 from config import CLOUD_URL
@@ -60,6 +61,7 @@ async def monitor_rssi(address: str, selected_device_name, matched_device_id):
                         notify_rcu_event(RCU_ID, selected_device_name, matched_device_id, 'Entsperrt')
                         ENTSPERRT = True
                         print("[RSSI] Entsperr-Schwelle erreicht – verlasse RSSI-Überwachung.")
+                        await send_unlock_status(address)
                         return   # Funktion verlassen
 
 

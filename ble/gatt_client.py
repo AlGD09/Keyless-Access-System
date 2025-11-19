@@ -176,4 +176,28 @@ async def perform_challenge_response(device):
         if "org.bluez.GattService1" in str(e):
             raise SystemExit("org.bluez.GattService1")
         return False
-    
+
+
+
+
+
+async def send_unlock_status(address: str):
+    from bleak import BleakClient
+    try:
+        async with BleakClient(address, timeout=10.0, adapter="hci0") as client:
+            if not client.is_connected:
+                print("Wiederverbindung fehlgeschlagen.")
+                return False
+
+            payload = b"Entsperrt"  
+            
+            # Vorher mussten wir die Characteristics suchen, 
+            # weil direkt mit ihnen gearbeitet (lesen, Notifies aktivieren) wird 
+            # – für einen einfachen Write reicht die UUID, den Rest erledigt Bleak automatisch.
+            await client.write_gatt_char(CHAR_CHALLENGE, payload)
+            print("Entsperrt an Smartphone geschickt")
+            return True
+
+    except Exception as e:
+        print(f"Fehler beim Senden Entsperrungsnachricht: {e}")
+        return False
