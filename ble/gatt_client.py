@@ -196,8 +196,8 @@ async def send_unlock_status(address: str):
             # – für einen einfachen Write reicht die UUID, den Rest erledigt Bleak automatisch.
             await client.write_gatt_char(CHAR_CHALLENGE, payload)
             print("Entsperrt an Smartphone geschickt")
-            return True
+            return client
 
     except Exception as e:
         print(f"Fehler beim Senden Entsperrungsnachricht: {e}")
-        return False
+        return

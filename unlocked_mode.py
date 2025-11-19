@@ -16,7 +16,7 @@ FAILSAFE_TIMEOUT = 30   # Sekunden bis Auto-Lock, wenn Cloud tot ist
 RSSI_UNLOCK_THRESHOLD = -90     # wenn darunter → sperren
 RSSI_CHECK_INTERVAL = 3         # Sekunden Abstand 
 
-def start_unlocked_mode(selected_device_name, selected_device_adress, matched_device_id):
+def start_unlocked_mode(selected_device_name, client, matched_device_id):
     """
     Dieser Modus wird nach erfolgreicher BLE + RSSI-Freigabe betreten.
     Die Maschine ist entsperrt und wartet auf LOCK von der Cloud.
@@ -35,7 +35,7 @@ def start_unlocked_mode(selected_device_name, selected_device_adress, matched_de
 
     watchdog = threading.Thread(
         target=rssi_watchdog,
-        args=(selected_device_adress, selected_device_name, matched_device_id, stop_flag),
+        args=(client, stop_flag),
         daemon=True
     )
     watchdog.start()
@@ -65,7 +65,7 @@ def start_unlocked_mode(selected_device_name, selected_device_adress, matched_de
 
                         if event == "LOCK":  # Falls LOCK empfangen wird, Maschine verriegeln (DIO-1) und zurücl zu Main (Scannen)
                             stop_flag.set()
-                            return handle_lock(selected_device_name, matched_device_id)  
+                            return handle_lock()  
                             
 
 
@@ -74,13 +74,13 @@ def start_unlocked_mode(selected_device_name, selected_device_adress, matched_de
             if time.time() - failsafe_start > FAILSAFE_TIMEOUT:
                 print("\n[UNLOCKED][FAILSAFE] Cloud-Verbindung dauerhaft verloren – Maschine wird verriegelt!\n")
                 stop_flag.set()
-                return handle_lock(selected_device_name, matched_device_id)
+                return handle_lock()
 
             # sonst normal warten und weiter versuchen
             time.sleep(SSE_RECONNECT_DELAY)
 
 
-def handle_lock(selected_device_name, matched_device_id):
+def handle_lock():
     """
     LOCK von der Cloud empfangen:
     - Maschine verriegeln
@@ -103,20 +103,17 @@ def handle_lock(selected_device_name, matched_device_id):
     return  # <-- kehrt zu main() zurück
 
 
-def rssi_watchdog(address, selected_device_name, matched_device_id, stop_flag):
+def rssi_watchdog(client, stop_flag):
     asyncio.run(rssi_watchdog_coroutine(
-        address,
-        selected_device_name,
-        matched_device_id,
+        client,
         stop_flag
     ))
 
-async def rssi_watchdog_coroutine(address, selected_device_name, matched_device_id, stop_flag):
+async def rssi_watchdog_coroutine(client, stop_flag):
     print("[RSSI] Watchdog gestartet.")
 
     while not stop_flag.is_set():
         try:
-            client = BleakClient(address, timeout=6.0, adapter="hci0")
 
             await client.connect()
             if not client.is_connected:
@@ -126,7 +123,7 @@ async def rssi_watchdog_coroutine(address, selected_device_name, matched_device_
 
             # RSSI lesen
             rssi = await client.get_current_rssi()
-            await client.disconnect()
+        
 
             if rssi is not None:
                 print(f"[RSSI] {rssi} dBm")
@@ -134,7 +131,8 @@ async def rssi_watchdog_coroutine(address, selected_device_name, matched_device_
             if rssi < RSSI_UNLOCK_THRESHOLD:
                 print("[RSSI] Schwelle unterschritten → AUTO-LOCK")
                 stop_flag.set()
-                handle_lock(selected_device_name, matched_device_id)
+                handle_lock()
+                await client.disconnect()
                 return
 
             await asyncio.sleep(RSSI_CHECK_INTERVAL)
