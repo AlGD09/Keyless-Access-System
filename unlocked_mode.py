@@ -3,6 +3,7 @@ import time
 import requests
 import threading
 import asyncio
+import dbus
 
 from bleak import BleakScanner, BleakClient
 from rcu_io.DIO6 import dio6_set
@@ -121,8 +122,7 @@ async def rssi_watchdog_coroutine(client, stop_flag):
                 continue
 
             # RSSI lesen
-            device = client._backend._device
-            rssi = device.rssi if device else None
+            rssi = read_rssi_from_bluez(client)
 
 
             if rssi is not None:
@@ -141,3 +141,13 @@ async def rssi_watchdog_coroutine(client, stop_flag):
             print(f"[RSSI] Fehler: {e}")
             await asyncio.sleep(2)
 
+def read_rssi_from_bluez(client):
+    try:
+        bus = dbus.SystemBus()
+        dev_path = client._backend._device_path  # ESTO EXISTE EN BLEAK 0.20.2
+        device = bus.get_object("org.bluez", dev_path)
+        props = dbus.Interface(device, "org.freedesktop.DBus.Properties")
+        return props.Get("org.bluez.Device1", "RSSI")
+    except Exception as e:
+        print(f"[RSSI] DBus error: {e}")
+        return None
