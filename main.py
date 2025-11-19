@@ -52,10 +52,11 @@ async def monitor_rssi(address: str, selected_device_name, matched_device_id):
 
                 if rssi_value > RSSI_THRESHOLD:
                     notify_rcu_event(RCU_ID, selected_device_name, matched_device_id, 'Entsperrt')
+                    ENTSPERRT = True
                     print("[RSSI] Entsperr-Schwelle erreicht – verlasse RSSI-Überwachung.")
-                    client = await send_unlock_status(address)
+                    await send_unlock_status(address)
                     dio6_set(0)  # grün -> Freigabe
-                    return client  # Funktion verlassen
+                    return   # Funktion verlassen
 
                 else:
                     dio6_set(1)  # rot -> zu weit entfernt
@@ -192,8 +193,8 @@ async def main():
             print("Authentifizierung erfolgreich – Freigabe aktiv.")
             # dio6_set(0) sofort grün
             notify_rcu_event(RCU_ID, selected_device.name, matched_device_id, 'Freigegeben')
-            client = await monitor_rssi(selected_device.address, selected_device.name, matched_device_id)
-            start_unlocked_mode(selected_device.name, client, matched_device_id)
+            await monitor_rssi(selected_device.address, selected_device.name, matched_device_id)
+            start_unlocked_mode(selected_device.name, matched_device_id)
             continue 
 
         else:

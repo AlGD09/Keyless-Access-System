@@ -1,11 +1,6 @@
 # unlocked_mode.py
 import time
 import requests
-import threading
-import asyncio
-import dbus
-
-from bleak import BleakScanner, BleakClient
 from rcu_io.DIO6 import dio6_set
 from config import CLOUD_URL, RCU_ID
 
@@ -14,10 +9,7 @@ SSE_TIMEOUT = 300  # Verbindung wird jede x Sekunden erneuert
 FAILSAFE_TIMEOUT = 30   # Sekunden bis Auto-Lock, wenn Cloud tot ist
 
 
-RSSI_UNLOCK_THRESHOLD = -90     # wenn darunter → sperren
-RSSI_CHECK_INTERVAL = 3         # Sekunden Abstand 
-
-def start_unlocked_mode(selected_device_name, client, matched_device_id):
+def start_unlocked_mode(selected_device_name, matched_device_id):
     """
     Dieser Modus wird nach erfolgreicher BLE + RSSI-Freigabe betreten.
     Die Maschine ist entsperrt und wartet auf LOCK von der Cloud.
@@ -31,15 +23,6 @@ def start_unlocked_mode(selected_device_name, client, matched_device_id):
 
     # Maschine ist offen → LED grün
     dio6_set(0)
-
-    stop_flag = threading.Event()
-
-    watchdog = threading.Thread(
-        target=rssi_watchdog,
-        args=(client, stop_flag),
-        daemon=True
-    )
-    watchdog.start()
 
     # SSE-Endpunkt der Cloud
     sse_url = f"{CLOUD_URL}/api/rcu/sse/{RCU_ID}"
@@ -65,23 +48,19 @@ def start_unlocked_mode(selected_device_name, client, matched_device_id):
                         print(f"[UNLOCKED][SSE] Event: {event}")
 
                         if event == "LOCK":  # Falls LOCK empfangen wird, Maschine verriegeln (DIO-1) und zurücl zu Main (Scannen)
-                            stop_flag.set()
-                            return handle_lock()  
-                            
-
+                            return handle_lock(selected_device_name, matched_device_id)  
 
         except Exception as e:
             print(f"[UNLOCKED][SSE] Verbindung verloren – neuer Versuch in {SSE_RECONNECT_DELAY}s. Fehler: {e}") # Falls Verbindung fehlschlägt, wieder in 2s versuchen
             if time.time() - failsafe_start > FAILSAFE_TIMEOUT:
                 print("\n[UNLOCKED][FAILSAFE] Cloud-Verbindung dauerhaft verloren – Maschine wird verriegelt!\n")
-                stop_flag.set()
-                return handle_lock()
+                return handle_lock(selected_device_name, matched_device_id)
 
             # sonst normal warten und weiter versuchen
             time.sleep(SSE_RECONNECT_DELAY)
 
 
-def handle_lock():
+def handle_lock(selected_device_name, matched_device_id):
     """
     LOCK von der Cloud empfangen:
     - Maschine verriegeln
@@ -102,52 +81,3 @@ def handle_lock():
 
     print("[RCU] Maschine verriegelt. Rückkehr zum Scan-Modus.\n")
     return  # <-- kehrt zu main() zurück
-
-
-def rssi_watchdog(client, stop_flag):
-    asyncio.run(rssi_watchdog_coroutine(
-        client,
-        stop_flag
-    ))
-
-async def rssi_watchdog_coroutine(client, stop_flag):
-    print("[RSSI] Watchdog gestartet.")
-
-    while not stop_flag.is_set():
-        try:
-
-            if not client.is_connected:
-                print("[RSSI] Verbindung nicht möglich.")
-                await asyncio.sleep(2)
-                continue
-
-            # RSSI lesen
-            rssi = read_rssi_from_bluez(client)
-
-
-            if rssi is not None:
-                print(f"[RSSI] {rssi} dBm")
-
-            if rssi < RSSI_UNLOCK_THRESHOLD:
-                print("[RSSI] Schwelle unterschritten → AUTO-LOCK")
-                stop_flag.set()
-                handle_lock()
-                await client.disconnect()
-                return
-
-            await asyncio.sleep(RSSI_CHECK_INTERVAL)
-
-        except Exception as e:
-            print(f"[RSSI] Fehler: {e}")
-            await asyncio.sleep(2)
-
-def read_rssi_from_bluez(client):
-    try:
-        bus = dbus.SystemBus()
-        dev_path = client._backend._device_path  # ESTO EXISTE EN BLEAK 0.20.2
-        device = bus.get_object("org.bluez", dev_path)
-        props = dbus.Interface(device, "org.freedesktop.DBus.Properties")
-        return props.Get("org.bluez.Device1", "RSSI")
-    except Exception as e:
-        print(f"[RSSI] DBus error: {e}")
-        return None
