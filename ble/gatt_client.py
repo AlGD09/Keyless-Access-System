@@ -182,7 +182,7 @@ async def perform_challenge_response(device):
 
 
 async def send_unlock_status(address: str):
-    from bleak import BleakClient
+
     try:
         async with BleakClient(address, timeout=10.0, adapter="hci0") as client:
             if not client.is_connected:
@@ -190,7 +190,7 @@ async def send_unlock_status(address: str):
                 return False
 
             payload = b"Entsperrt"  
-            
+
             # Vorher mussten wir die Characteristics suchen, 
             # weil direkt mit ihnen gearbeitet (lesen, Notifies aktivieren) wird 
             # – für einen einfachen Write reicht die UUID, den Rest erledigt Bleak automatisch.
