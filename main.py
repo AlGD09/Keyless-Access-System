@@ -28,15 +28,11 @@ RSSI_INTERVAL = 2      # Sekunden zwischen RSSI-Abfragen
 RETRY_DELAY = 5       # Zeit zum Programm Neustart      
 TIMEOUT = 5    # Scanning Zeit
 
-ENTSPERRT = False
 NOT_FOUND = 3  # Versuche nach Authent. zum Neustart
 
 async def monitor_rssi(address: str, selected_device_name, matched_device_id):
     """Überwacht die Signalstärke und steuert DIO6 entsprechend."""
     print(f"Starte RSSI-Überwachung für {address} (Schwelle: {RSSI_THRESHOLD} dBm)")
-
-    global ENTSPERRT
-    ENTSPERRT = False
 
     not_found_count = 0  # Zähler für aufeinanderfolgende Nicht-Funde
 
@@ -55,15 +51,12 @@ async def monitor_rssi(address: str, selected_device_name, matched_device_id):
                 print(f"Aktueller RSSI: {rssi_value} dBm")
 
                 if rssi_value > RSSI_THRESHOLD:
+                    notify_rcu_event(RCU_ID, selected_device_name, matched_device_id, 'Entsperrt')
+                    ENTSPERRT = True
+                    print("[RSSI] Entsperr-Schwelle erreicht – verlasse RSSI-Überwachung.")
+                    await send_unlock_status(address)
                     dio6_set(0)  # grün -> Freigabe
-
-                    if not ENTSPERRT:
-                        notify_rcu_event(RCU_ID, selected_device_name, matched_device_id, 'Entsperrt')
-                        ENTSPERRT = True
-                        print("[RSSI] Entsperr-Schwelle erreicht – verlasse RSSI-Überwachung.")
-                        await send_unlock_status(address)
-                        return   # Funktion verlassen
-
+                    return   # Funktion verlassen
 
                 else:
                     dio6_set(1)  # rot -> zu weit entfernt
