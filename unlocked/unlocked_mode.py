@@ -25,7 +25,7 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
     # Maschine ist offen → LED grün
     dio6_set(0)
 
-    container, loop = start_advertising_thread()
+    #container, loop = start_advertising_thread()
 
     # SSE-Endpunkt der Cloud
     sse_url = f"{CLOUD_URL}/api/rcu/sse/{RCU_ID}"
@@ -51,14 +51,14 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
                         print(f"[UNLOCKED][SSE] Event: {event}")
 
                         if event == "LOCK":  # Falls LOCK empfangen wird, Maschine verriegeln (DIO-1) und zurücl zu Main (Scannen)     
-                            stop_advertising_thread(container, loop)
+                            # stop_advertising_thread(container, loop)
                             return handle_lock(selected_device_name, matched_device_id)  
 
         except Exception as e:
             print(f"[UNLOCKED][SSE] Verbindung verloren – neuer Versuch in {SSE_RECONNECT_DELAY}s. Fehler: {e}") # Falls Verbindung fehlschlägt, wieder in 2s versuchen
             if time.time() - failsafe_start > FAILSAFE_TIMEOUT:
                 print("\n[UNLOCKED][FAILSAFE] Cloud-Verbindung dauerhaft verloren – Maschine wird verriegelt!\n") 
-                stop_advertising_thread(container, loop)
+                # stop_advertising_thread(container, loop)
                 return handle_lock(selected_device_name, matched_device_id)
 
             # sonst normal warten und weiter versuchen

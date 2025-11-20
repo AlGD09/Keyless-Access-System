@@ -195,7 +195,6 @@ async def main():
             notify_rcu_event(RCU_ID, selected_device.name, matched_device_id, 'Freigegeben')
             await monitor_rssi(selected_device.address, selected_device.name, matched_device_id)
             start_unlocked_mode(selected_device.name, matched_device_id)
-
             continue 
 
         else:
