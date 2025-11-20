@@ -51,21 +51,19 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
                         print(f"[UNLOCKED][SSE] Event: {event}")
 
                         if event == "LOCK":  # Falls LOCK empfangen wird, Maschine verriegeln (DIO-1) und zurücl zu Main (Scannen)     
-                            stop_advertising_thread(container, loop)
-                            return handle_lock(selected_device_name, matched_device_id)  
+                            return handle_lock(container, loop)  
 
         except Exception as e:
             print(f"[UNLOCKED][SSE] Verbindung verloren – neuer Versuch in {SSE_RECONNECT_DELAY}s. Fehler: {e}") # Falls Verbindung fehlschlägt, wieder in 2s versuchen
             if time.time() - failsafe_start > FAILSAFE_TIMEOUT:
                 print("\n[UNLOCKED][FAILSAFE] Cloud-Verbindung dauerhaft verloren – Maschine wird verriegelt!\n") 
-                stop_advertising_thread(container, loop)
-                return handle_lock(selected_device_name, matched_device_id)
+                return handle_lock(container, loop)
 
             # sonst normal warten und weiter versuchen
             time.sleep(SSE_RECONNECT_DELAY)
 
 
-def handle_lock(selected_device_name, matched_device_id):
+def handle_lock(container, loop):
 
     print("\n[RCU] >>> LOCK von der Cloud erhalten – Maschine wird verriegelt <<<")
     # Verriegeln
@@ -75,6 +73,8 @@ def handle_lock(selected_device_name, matched_device_id):
 
     # Kleine Pause für Hardware-Stabilität
     time.sleep(1)
+
+    stop_advertising_thread(container, loop)
 
     print("[RCU] Maschine verriegelt. Rückkehr zum Scan-Modus.\n")
     return  # <-- kehrt zu main() zurück
