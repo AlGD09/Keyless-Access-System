@@ -194,7 +194,7 @@ async def main():
             # dio6_set(0) sofort grün
             notify_rcu_event(RCU_ID, selected_device.name, matched_device_id, 'Freigegeben')
             await monitor_rssi(selected_device.address, selected_device.name, matched_device_id)
-            start_unlocked_mode(selected_device.name, matched_device_id)
+            await start_unlocked_mode(selected_device.name, matched_device_id)
             continue 
 
         else:
