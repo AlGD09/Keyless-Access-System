@@ -2,6 +2,7 @@
 import time
 import requests
 from rcu_io.DIO6 import dio6_set
+from unlocked.distance_check import start_rcu_advertising, stop_rcu_advertising
 from config import CLOUD_URL, RCU_ID
 
 SSE_RECONNECT_DELAY = 2
@@ -9,7 +10,7 @@ SSE_TIMEOUT = 300  # Verbindung wird jede x Sekunden erneuert
 FAILSAFE_TIMEOUT = 30   # Sekunden bis Auto-Lock, wenn Cloud tot ist
 
 
-def start_unlocked_mode(selected_device_name, matched_device_id):
+async def start_unlocked_mode(selected_device_name, matched_device_id):
     """
     Dieser Modus wird nach erfolgreicher BLE + RSSI-Freigabe betreten.
     Die Maschine ist entsperrt und wartet auf LOCK von der Cloud.
@@ -23,6 +24,10 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
 
     # Maschine ist offen → LED grün
     dio6_set(0)
+
+    # Abstandsverifizierung durchs Advertisen 
+    bus, ad_manager, path = await start_rcu_advertising()
+
 
     # SSE-Endpunkt der Cloud
     sse_url = f"{CLOUD_URL}/api/rcu/sse/{RCU_ID}"
@@ -48,12 +53,14 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
                         print(f"[UNLOCKED][SSE] Event: {event}")
 
                         if event == "LOCK":  # Falls LOCK empfangen wird, Maschine verriegeln (DIO-1) und zurücl zu Main (Scannen)
+                            await stop_rcu_advertising(bus, ad_manager, path)
                             return handle_lock(selected_device_name, matched_device_id)  
 
         except Exception as e:
             print(f"[UNLOCKED][SSE] Verbindung verloren – neuer Versuch in {SSE_RECONNECT_DELAY}s. Fehler: {e}") # Falls Verbindung fehlschlägt, wieder in 2s versuchen
             if time.time() - failsafe_start > FAILSAFE_TIMEOUT:
                 print("\n[UNLOCKED][FAILSAFE] Cloud-Verbindung dauerhaft verloren – Maschine wird verriegelt!\n")
+                await stop_rcu_advertising(bus, ad_manager, path)
                 return handle_lock(selected_device_name, matched_device_id)
 
             # sonst normal warten und weiter versuchen
@@ -61,18 +68,10 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
 
 
 def handle_lock(selected_device_name, matched_device_id):
-    """
-    LOCK von der Cloud empfangen:
-    - Maschine verriegeln
-    - LED auf rot setzen
-    - Modus verlassen -> main() übernimmt wieder
-    """
 
     print("\n[RCU] >>> LOCK von der Cloud erhalten – Maschine wird verriegelt <<<")
-
     # Verriegeln
     dio6_set(1)
-
     # Optional: Cloud über Verriegelung informieren
     # notify_rcu_event(RCU_ID, selected_device_name, matched_device_id, 'Verriegelt')
 
@@ -81,3 +80,7 @@ def handle_lock(selected_device_name, matched_device_id):
 
     print("[RCU] Maschine verriegelt. Rückkehr zum Scan-Modus.\n")
     return  # <-- kehrt zu main() zurück
+
+
+
+

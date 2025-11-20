@@ -18,7 +18,7 @@ from cloud.api_client import get_assigned_smartphones
 from cloud.token_client import fetch_token_by_numeric_id, CloudError 
 from cloud.notify import notify_rcu_event       
 from auth.challenge import set_shared_key_hex
-from unlocked_mode import start_unlocked_mode
+from unlocked.unlocked_mode import start_unlocked_mode
 
 
 
