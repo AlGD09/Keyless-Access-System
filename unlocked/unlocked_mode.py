@@ -74,7 +74,7 @@ def handle_lock(container, loop):
     # Kleine Pause für Hardware-Stabilität
     time.sleep(1)
 
-    stop_advertising_thread(container, loop)
+    # stop_advertising_thread(container, loop)
 
     print("[RCU] Maschine verriegelt. Rückkehr zum Scan-Modus.\n")
     return  # <-- kehrt zu main() zurück
