@@ -25,7 +25,7 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
     # Maschine ist offen → LED grün
     dio6_set(0)
 
-    container, loop = start_advertising_thread()
+    # container, loop = start_advertising_thread()
 
     # SSE-Endpunkt der Cloud
     sse_url = f"{CLOUD_URL}/api/rcu/sse/{RCU_ID}"
