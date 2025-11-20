@@ -19,6 +19,7 @@ from cloud.token_client import fetch_token_by_numeric_id, CloudError
 from cloud.notify import notify_rcu_event       
 from auth.challenge import set_shared_key_hex
 from unlocked.unlocked_mode import start_unlocked_mode
+from unlocked.distance_check import start_rcu_advertising, stop_rcu_advertising
 
 
 
@@ -194,7 +195,10 @@ async def main():
             # dio6_set(0) sofort grün
             notify_rcu_event(RCU_ID, selected_device.name, matched_device_id, 'Freigegeben')
             await monitor_rssi(selected_device.address, selected_device.name, matched_device_id)
-            await start_unlocked_mode(selected_device.name, matched_device_id)
+            bus, ad_manager, path = await start_rcu_advertising()
+            start_unlocked_mode(selected_device.name, matched_device_id)
+            await stop_rcu_advertising(bus, ad_manager, path)
+
             continue 
 
         else:
