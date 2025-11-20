@@ -30,19 +30,19 @@ class RcuAdvertisement(ServiceInterface):
     # ---- DBus Properties (muss exakt so implementiert sein) ----
 
     @dbus_property(access=PropertyAccess.READ)
-    def Type(self):
+    def Type(self) -> "s":
         return self.ad_type
 
     @dbus_property(access=PropertyAccess.READ)
-    def LocalName(self):
+    def LocalName(self) -> "s":
         return self.local_name
 
     @dbus_property(access=PropertyAccess.READ)
-    def ManufacturerData(self):
+    def ManufacturerData(self) -> "a{qv}":
         return self.manufacturer_data
-    
+
     @dbus_property(access=PropertyAccess.READ)
-    def ServiceUUIDs(self):
+    def ServiceUUIDs(self) -> "as":
         return self.service_uuids
     
     @method()
