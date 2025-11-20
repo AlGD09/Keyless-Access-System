@@ -38,21 +38,26 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
     while True:  # Endlos-Schleide -> verbunden bleiben
         try:   # Verbindung offen bleiben Cloud "LOCK" sendet, oder Verbindung verloren
             # Persistente SSE-Verbindung zur Cloud starten
-            with requests.get(sse_url, headers=headers, stream=True, timeout=None) as resp:  
-                for raw_line in resp.iter_lines(decode_unicode=True): # Cloud sendet Zeilen wie: data: LOCK, data: HEARTBEAT_OK, data: STATUS
-                    
+            with requests.get(sse_url, headers=headers, stream=True, timeout=None) as resp:
+                for raw_line in resp.iter_lines(decode_unicode=True):
+
+                    # LOG COMPLETO
+                    print(f"[RAW SSE] >> '{raw_line}'")
+
                     if not raw_line:
                         continue
 
-                    line = raw_line   # Bytes in Strings dekodieren in data 
+                    line = raw_line
 
                     if line.startswith("data:"):
-                        event = line.split(":", 1)[1].strip()  # schneidet "data: " von der Nachricht
-                        print(f"[UNLOCKED][SSE] Event: {event}")
+                        # Limpieza robusta
+                        cleaned = line.replace("data:", "").strip()
+                        event = cleaned.upper()
 
-                        if event == "LOCK":  # Falls LOCK empfangen wird, Maschine verriegeln (DIO-1) und zurücl zu Main (Scannen)     
-                            # stop_advertising_thread(container, loop)
-                            return handle_lock(selected_device_name, matched_device_id)  
+                        print(f"[UNLOCKED][SSE] Event: '{event}'")
+
+                        if event == "LOCK":
+                            return handle_lock(container, loop)
 
         except Exception as e:
             print(f"[UNLOCKED][SSE] Verbindung verloren – neuer Versuch in {SSE_RECONNECT_DELAY}s. Fehler: {e}") # Falls Verbindung fehlschlägt, wieder in 2s versuchen
