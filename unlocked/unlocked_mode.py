@@ -57,7 +57,7 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
                         print(f"[UNLOCKED][SSE] Event: '{event}'")
 
                         if event == "LOCK":
-                            return handle_lock(container, loop)
+                            return handle_lock(selected_device_name, matched_device_id)
 
         except Exception as e:
             print(f"[UNLOCKED][SSE] Verbindung verloren – neuer Versuch in {SSE_RECONNECT_DELAY}s. Fehler: {e}") # Falls Verbindung fehlschlägt, wieder in 2s versuchen
