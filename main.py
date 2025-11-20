@@ -51,11 +51,15 @@ async def monitor_rssi(address: str, selected_device_name, matched_device_id):
                 print(f"Aktueller RSSI: {rssi_value} dBm")
 
                 if rssi_value > RSSI_THRESHOLD:
-                    notify_rcu_event(RCU_ID, selected_device_name, matched_device_id, 'Entsperrt')
-                    ENTSPERRT = True
-                    print("[RSSI] Entsperr-Schwelle erreicht – verlasse RSSI-Überwachung.")
-                    await send_unlock_status(address)
-                    dio6_set(0)  # grün -> Freigabe
+                    success = await send_unlock_status(address)
+                    if success: 
+                        notify_rcu_event(RCU_ID, selected_device_name, matched_device_id, 'Entsperrt')
+                        print("[RSSI] Entsperr-Schwelle erreicht – verlasse RSSI-Überwachung.")
+                        dio6_set(0)  # grün -> Freigabe
+                    else: 
+                        print(f"Maschine bleibt verriegelt")
+                        dio6_set(1)
+                        
                     return   # Funktion verlassen
 
                 else:
