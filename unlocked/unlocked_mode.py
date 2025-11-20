@@ -26,7 +26,7 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
     dio6_set(0)
 
     #
-    container, loop = start_advertising_thread()
+    # container, loop = start_advertising_thread()
 
     # SSE-Endpunkt der Cloud
     sse_url = f"{CLOUD_URL}/api/rcu/sse/{RCU_ID}"
@@ -58,27 +58,27 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
                         print(f"[UNLOCKED][SSE] Event: '{event}'")
 
                         if event == "LOCK":
-                            return handle_lock(container, loop)
+                            return handle_lock(selected_device_name, matched_device_id)
 
         except Exception as e:
             print(f"[UNLOCKED][SSE] Verbindung verloren – neuer Versuch in {SSE_RECONNECT_DELAY}s. Fehler: {e}") # Falls Verbindung fehlschlägt, wieder in 2s versuchen
             if time.time() - failsafe_start > FAILSAFE_TIMEOUT:
                 print("\n[UNLOCKED][FAILSAFE] Cloud-Verbindung dauerhaft verloren – Maschine wird verriegelt!\n") 
                 # stop_advertising_thread(container, loop)
-                return handle_lock(container, loop)
+                return handle_lock(selected_device_name, matched_device_id)
 
             # sonst normal warten und weiter versuchen
             time.sleep(SSE_RECONNECT_DELAY)
 
 
-def handle_lock(container, loop):
+def handle_lock(selected_device_name, matched_device_id):
 
     print("\n[RCU] >>> LOCK von der Cloud erhalten – Maschine wird verriegelt <<<")
     # Verriegeln
     dio6_set(1)
     # Optional: Cloud über Verriegelung informieren
     # notify_rcu_event(RCU_ID, selected_device_name, matched_device_id, 'Verriegelt')
-    stop_advertising_thread(container, loop)
+
     # Kleine Pause für Hardware-Stabilität
     time.sleep(1)
 
