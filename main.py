@@ -82,27 +82,6 @@ async def monitor_rssi(address: str, selected_device_name, matched_device_id):
             dio6_set(1)
             return
 
-
-"""
-def init_shared_key_from_cloud() -> str:
-    
-    info = get_assigned_smartphone(rcu_id=RCU_ID, base_url = CLOUD_URL)
-    if not info:
-        raise RuntimeError("Kein zugewiesenes Smartphone erhalten.")
-
-    numeric_id = info["id"]        # für Token-Endpoint
-    device_id  = info["deviceId"]  
-
-    try:
-        token_hex = fetch_token_by_numeric_id(int(numeric_id))  # holt Hex-String
-    except CloudError as e:
-        raise RuntimeError(f"Token konnte nicht geladen werden: {e}") from e
-
-    set_shared_key_hex(token_hex)
-    print(f"Shared Key gesetzt (from cloud). deviceId={device_id}, id={numeric_id}")
-    return device_id
-"""
-
 def init_devices_from_cloud(rcu_id=RCU_ID):
     """
     Lädt alle zugewiesenen Smartphones dieser RCU und deren Tokens.
@@ -141,11 +120,15 @@ def init_devices_from_cloud(rcu_id=RCU_ID):
 
 
 async def main():
+
+    # Immer beim Keyboard Interrupt DIO -> 1 setzen
     def handle_sigint(signum, frame):
         dio6_set(1)
         raise KeyboardInterrupt
 
     signal.signal(signal.SIGINT, handle_sigint)
+
+    # --- MAIN-LOOP ---
     while True: 
         dio6_set(1)
         print("Starte Verbindungsversuch...")
@@ -230,7 +213,7 @@ if __name__ == "__main__":
             # andere SystemExit-Fälle normal beenden
             raise
     except KeyboardInterrupt:
-        dio6_set(1)
+        dio6_set(1)  
         sys.exit(1)
     except Exception as e:
         dio6_set(1)

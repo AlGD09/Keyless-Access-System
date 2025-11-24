@@ -42,7 +42,7 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
     while True:  # Endlos-Schleide -> verbunden bleiben
         try:   # Verbindung offen bleiben Cloud "LOCK" sendet, oder Verbindung verloren
             # Persistente SSE-Verbindung zur Cloud starten
-            with requests.get(sse_url, headers=headers, stream=True, timeout=None) as resp:
+            with requests.get(sse_url, headers=headers, stream=True, timeout=(5, 15)) as resp:
                 for raw_line in resp.iter_lines(decode_unicode=True):
 
                     # LOG COMPLETO
@@ -59,6 +59,9 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
                         event = cleaned.upper()
 
                         print(f"[UNLOCKED][SSE] Event: '{event}'")
+
+                        # Jeder empfangene Event/Heartbeat hält den Failsafe-Timer aktuell
+                        failsafe_start = time.time()
 
                         if event == "LOCK":
                             return handle_lock(container, loop, selected_device_name, matched_device_id)
