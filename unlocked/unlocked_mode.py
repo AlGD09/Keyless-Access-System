@@ -3,11 +3,14 @@ import time
 import requests
 from rcu_io.DIO6 import dio6_set
 from unlocked.distance_check import start_advertising_thread, stop_advertising_thread
+from cloud.notify import notify_rcu_event   
 from config import CLOUD_URL, RCU_ID
+
 
 SSE_RECONNECT_DELAY = 2
 SSE_TIMEOUT = 300  # Verbindung wird jede x Sekunden erneuert 
 FAILSAFE_TIMEOUT = 30   # Sekunden bis Auto-Lock, wenn Cloud tot ist
+
 
 
 def start_unlocked_mode(selected_device_name, matched_device_id):
@@ -58,26 +61,27 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
                         print(f"[UNLOCKED][SSE] Event: '{event}'")
 
                         if event == "LOCK":
-                            return handle_lock(container, loop)
+                            return handle_lock(container, loop, selected_device_name, matched_device_id)
 
         except Exception as e:
             print(f"[UNLOCKED][SSE] Verbindung verloren – neuer Versuch in {SSE_RECONNECT_DELAY}s. Fehler: {e}") # Falls Verbindung fehlschlägt, wieder in 2s versuchen
             if time.time() - failsafe_start > FAILSAFE_TIMEOUT:
                 print("\n[UNLOCKED][FAILSAFE] Cloud-Verbindung dauerhaft verloren – Maschine wird verriegelt!\n") 
                 # stop_advertising_thread(container, loop)
-                return handle_lock(container, loop)
+                return handle_lock(container, loop, selected_device_name, matched_device_id)
 
             # sonst normal warten und weiter versuchen
             time.sleep(SSE_RECONNECT_DELAY)
 
 
-def handle_lock(container, loop):
+
+def handle_lock(container, loop, selected_device_name, matched_device_id):
 
     print("\n[RCU] >>> LOCK von der Cloud erhalten – Maschine wird verriegelt <<<")
     # Verriegeln
     dio6_set(1)
     # Optional: Cloud über Verriegelung informieren
-    # notify_rcu_event(RCU_ID, selected_device_name, matched_device_id, 'Verriegelt')
+    notify_rcu_event(RCU_ID, selected_device_name, matched_device_id, 'Verriegelt')
     stop_advertising_thread(container, loop)
     # Kleine Pause für Hardware-Stabilität
     time.sleep(1)
