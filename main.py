@@ -53,7 +53,7 @@ async def monitor_rssi(address: str, selected_device_name, matched_device_id):
                 if rssi_value > RSSI_THRESHOLD:
                     success = await send_unlock_status(address)
                     if success: 
-                        notify_rcu_event(RCU_ID, selected_device_name, matched_device_id, 'Entsperrt')
+                        notify_rcu_event(RCU_ID, selected_device_name, matched_device_id, 'Entriegelt')
                         print("[RSSI] Entsperr-Schwelle erreicht – verlasse RSSI-Überwachung.")
                         dio6_set(0)  # grün -> Freigabe
                     else: 
@@ -141,6 +141,7 @@ def init_devices_from_cloud(rcu_id=RCU_ID):
 
 async def main():
     while True: 
+        dio6_set(1)
         print("Starte Verbindungsversuch...")
 
         try:
@@ -196,7 +197,7 @@ async def main():
         if success:
             print("Authentifizierung erfolgreich – Freigabe aktiv.")
             # dio6_set(0) sofort grün
-            notify_rcu_event(RCU_ID, selected_device.name, matched_device_id, 'Freigegeben')
+            notify_rcu_event(RCU_ID, selected_device.name, matched_device_id, 'Zugang autorisiert')
             await monitor_rssi(selected_device.address, selected_device.name, matched_device_id)
             start_unlocked_mode(selected_device.name, matched_device_id)
             continue 
@@ -223,6 +224,7 @@ if __name__ == "__main__":
             # andere SystemExit-Fälle normal beenden
             raise
     except Exception as e:
+        dio6_set(1)
         # andere Ausnahmen nur anzeigen
         print(f"Unerwarteter Fehler: {e}")
         raise
