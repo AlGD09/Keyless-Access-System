@@ -3,6 +3,7 @@
 
 import os 
 import sys
+import signal
 import asyncio
 import importlib
 from ble import central
@@ -140,6 +141,11 @@ def init_devices_from_cloud(rcu_id=RCU_ID):
 
 
 async def main():
+    def handle_sigint(signum, frame):
+        dio6_set(1)
+        raise KeyboardInterrupt
+
+    signal.signal(signal.SIGINT, handle_sigint)
     while True: 
         dio6_set(1)
         print("Starte Verbindungsversuch...")
@@ -223,6 +229,9 @@ if __name__ == "__main__":
         else:
             # andere SystemExit-Fälle normal beenden
             raise
+    except KeyboardInterrupt:
+        dio6_set(1)
+        sys.exit(1)
     except Exception as e:
         dio6_set(1)
         # andere Ausnahmen nur anzeigen
