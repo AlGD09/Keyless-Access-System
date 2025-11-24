@@ -38,7 +38,7 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
     while True:  # Endlos-Schleide -> verbunden bleiben
         try:   # Verbindung offen bleiben Cloud "LOCK" sendet, oder Verbindung verloren
             # Persistente SSE-Verbindung zur Cloud starten
-            with requests.get(sse_url, headers=headers, stream=True, timeout=(5, 15)) as resp:
+            with requests.get(sse_url, headers=headers, stream=True, timeout=(5, 15)) as resp: ## 5s Verbindungsaufbau, 15s max. Wartezeit zwischen Daten
                 for raw_line in resp.iter_lines(decode_unicode=True):
 
                     # LOG COMPLETO

@@ -57,12 +57,10 @@ async def monitor_rssi(address: str, selected_device_name, matched_device_id):
                         notify_rcu_event(RCU_ID, selected_device_name, matched_device_id, 'Entriegelt')
                         print("[RSSI] Entsperr-Schwelle erreicht – verlasse RSSI-Überwachung.")
                         dio6_set(0)  # grün -> Freigabe
+                        return True  # Zurück auf Main Loop + unlocked mode starten
                     else: 
                         print(f"Maschine bleibt verriegelt")
                         dio6_set(1)
-                        
-                    return   # Funktion verlassen
-
                 else:
                     dio6_set(1)  # rot -> zu weit entfernt
                 not_found_count = 0  # Zähler zurücksetzen
@@ -80,7 +78,7 @@ async def monitor_rssi(address: str, selected_device_name, matched_device_id):
         except Exception as e:
             print(f"Fehler beim RSSI-Check: {e}")
             dio6_set(1)
-            return
+            return False
 
 def init_devices_from_cloud(rcu_id=RCU_ID):
     """
@@ -187,8 +185,9 @@ async def main():
             print("Authentifizierung erfolgreich – Freigabe aktiv.")
             # dio6_set(0) sofort grün
             notify_rcu_event(RCU_ID, selected_device.name, matched_device_id, 'Zugang autorisiert')
-            await monitor_rssi(selected_device.address, selected_device.name, matched_device_id)
-            start_unlocked_mode(selected_device.name, matched_device_id)
+            result = await monitor_rssi(selected_device.address, selected_device.name, matched_device_id)
+            if result:
+                start_unlocked_mode(selected_device.name, matched_device_id)
             continue 
 
         else:
