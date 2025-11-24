@@ -7,9 +7,6 @@ from cloud.notify import notify_rcu_event
 from config import CLOUD_URL, RCU_ID
 
 
-SSE_RECONNECT_DELAY = 2
-SSE_TIMEOUT = 300  # Verbindung wird jede x Sekunden erneuert 
-FAILSAFE_TIMEOUT = 30   # Sekunden bis Auto-Lock, wenn Cloud tot ist
 
 
 
@@ -23,7 +20,6 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
     print("\n[RCU] >>> ENTSPERRT-MODUS AKTIV <<<")
     print("[RCU] Maschine ist freigegeben. Warte auf LOCK von der Cloud...\n")
 
-    failsafe_start = time.time()
 
     # Maschine ist offen → LED grün
     dio6_set(0)
@@ -67,14 +63,11 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
                             return handle_lock(container, loop, selected_device_name, matched_device_id)
 
         except Exception as e:
-            print(f"[UNLOCKED][SSE] Verbindung verloren – neuer Versuch in {SSE_RECONNECT_DELAY}s. Fehler: {e}") # Falls Verbindung fehlschlägt, wieder in 2s versuchen
-            if time.time() - failsafe_start > FAILSAFE_TIMEOUT:
-                print("\n[UNLOCKED][FAILSAFE] Cloud-Verbindung dauerhaft verloren – Maschine wird verriegelt!\n") 
-                # stop_advertising_thread(container, loop)
-                return handle_lock(container, loop, selected_device_name, matched_device_id)
+            print("\n[UNLOCKED][FAILSAFE] Cloud-Verbindung dauerhaft verloren – Maschine wird verriegelt!\n") 
+            # stop_advertising_thread(container, loop)
+            return handle_lock(container, loop, selected_device_name, matched_device_id)
 
-            # sonst normal warten und weiter versuchen
-            time.sleep(SSE_RECONNECT_DELAY)
+        
 
 
 
