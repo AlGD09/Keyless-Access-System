@@ -59,8 +59,8 @@ async def monitor_rssi(address: str, selected_device_name, matched_device_id):
                         dio6_set(0)  # grün -> Freigabe
                         return True  # Zurück auf Main Loop + unlocked mode starten
                     else: 
-                        print(f"Maschine bleibt verriegelt")
-                        dio6_set(1)
+                        print(f"Maschine bleibt verriegelt") # Erneut versuchen Nachricht an Smartphone
+                        dio6_set(1) 
                 else:
                     dio6_set(1)  # rot -> zu weit entfernt
                 not_found_count = 0  # Zähler zurücksetzen
@@ -194,7 +194,7 @@ async def main():
             print("Authentifizierung fehlgeschlagen – Zugang verweigert.")
             dio6_set(1)  # rot
             if gatt_client.RESPONSE_STATUS: # Falls doch ein Response erhalten wurde -> Fehler notify
-                notify_rcu_event(RCU_ID, selected_device.name, matched_device_id, 'Fehler')
+                notify_rcu_event(RCU_ID, selected_device.name, matched_device_id, 'Zugang verweigert')
 
             await asyncio.sleep(RETRY_DELAY)
             continue
