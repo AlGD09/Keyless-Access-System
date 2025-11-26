@@ -33,7 +33,7 @@ def fetch_token_by_numeric_id(device_numeric_id: int, timeout_s: float = 4.0) ->
         if isinstance(js, dict):
             if "token" in js:
                 token_raw = str(js["token"]).strip()
-            elif "auth_token" in js:                # <–– wichtig: dein tatsächliches Feld
+            elif "auth_token" in js:                
                 token_raw = str(js["auth_token"]).strip()
     except Exception:
         pass

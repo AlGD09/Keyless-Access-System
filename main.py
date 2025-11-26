@@ -18,8 +18,10 @@ from config import RCU_ID
 from cloud.api_client import get_assigned_smartphones  
 from cloud.token_client import fetch_token_by_numeric_id, CloudError 
 from cloud.notify import notify_rcu_event       
+from cloud.remote_check import check_remote_mode
 from auth.challenge import set_shared_key_hex
 from unlocked.unlocked_mode import start_unlocked_mode
+from remote.remote_mode import start_remote_mode
 
 
 
@@ -129,6 +131,15 @@ async def main():
     # --- MAIN-LOOP ---
     while True: 
         dio6_set(1)
+        mode = check_remote_mode(RCU_ID)
+        if mode:
+            print("Starte Remote Mode...")
+            start_remote_mode()
+            print("Main Loop restartet")
+            continue 
+
+
+
         print("Starte Verbindungsversuch...")
 
         try:

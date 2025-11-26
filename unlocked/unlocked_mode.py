@@ -56,9 +56,6 @@ def start_unlocked_mode(selected_device_name, matched_device_id):
 
                         print(f"[UNLOCKED][SSE] Event: '{event}'")
 
-                        # Jeder empfangene Event/Heartbeat hält den Failsafe-Timer aktuell
-                        failsafe_start = time.time()
-
                         if event == "LOCK":
                             return handle_lock(container, loop, selected_device_name, matched_device_id)
 
