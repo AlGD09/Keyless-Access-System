@@ -85,7 +85,7 @@ async def perform_challenge_response(device):
             print(f"Challenge erzeugt: {challenge.hex()}")
 
             
-            # RCU-ID (z. B. "A116G61") als Bytes anhängen
+            # RCU-ID (z. B. "A116G6") als Bytes anhängen
             rcu_id_bytes = RCU_ID.encode("utf-8")
             payload = challenge + rcu_id_bytes
             print(f"Challenge-Payload gesendet (Challenge + ID): {payload.hex()}")
